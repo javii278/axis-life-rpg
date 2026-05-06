@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #0a0a0f;
+  color: #e2e2f0;
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* Evita el scroll horizontal accidental en móvil */
+  overflow-x: hidden;
+  /* Soporte para área segura en iPhones con notch */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Safe area para el bottom nav en iOS */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Tap target mínimo en móvil */
+@media (max-width: 1024px) {
+  button, a {
+    min-height: 44px;
+  }
+  /* Quita scrollbar en móvil */
+  ::-webkit-scrollbar { display: none; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #12121a; }
+::-webkit-scrollbar-thumb { background: #2d2d4a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
+
+/* Scanline sutil sobre cards RPG */
+.scanline::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Glow para stats */
+.glow-purple { box-shadow: 0 0 12px rgba(124, 58, 237, 0.4); }
+.glow-cyan   { box-shadow: 0 0 12px rgba(6, 182, 212, 0.4); }
+.glow-gold   { box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+
+/* Animación pulso suave para sesión activa */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(6, 182, 212, 0.3); }
+  50%       { box-shadow: 0 0 20px rgba(6, 182, 212, 0.7); }
+}
+.pulse-active { animation: pulse-glow 2s ease-in-out infinite; }

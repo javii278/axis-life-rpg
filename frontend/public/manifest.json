@@ -1,0 +1,19 @@
+{
+  "name": "Axis: The Life RPG",
+  "short_name": "Axis",
+  "description": "Tu sistema operativo personal gamificado. Convierte tus hábitos en stats de RPG.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7c3aed",
+  "categories": ["productivity", "lifestyle", "games"],
+  "icons": [
+    { "src": "/icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Hábitos", "url": "/habits", "description": "Ver y completar hábitos del día" },
+    { "name": "Foco",    "url": "/focus",  "description": "Iniciar sesión de foco" }
+  ]
+}

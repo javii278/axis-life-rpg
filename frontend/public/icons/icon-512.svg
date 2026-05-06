@@ -1,0 +1,7 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'>
+  <rect width='512' height='512' rx='77' fill='#0a0a0f'/>
+  <rect x='40.96' y='40.96' width='430.08' height='430.08' rx='53.9' fill='#12121a'/>
+  <text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' 
+        font-family='system-ui,sans-serif' font-weight='900' font-size='266.24' fill='#7c3aed'>A</text>
+  <circle cx='368.64' cy='143.36' r='40.96' fill='#a78bfa' opacity='0.8'/>
+</svg>

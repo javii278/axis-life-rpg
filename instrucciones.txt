@@ -1,0 +1,173 @@
+● 1. Qué puede hacer Axis: The Life RPG
+
+  Personaje RPG
+  - Crea un personaje con nombre y clase (Warrior, Architect, Scholar, Monk, Explorer, Guardian)
+  - 6 stats reales (VIT, FOC, SAB, DIS, CRE, VOL) que suben/bajan según tu comportamiento
+  - Sprite pixel art animado que evoluciona con el nivel
+  - Sistema de XP y niveles con detección de level-up (modal fullscreen con partículas)
+
+  Hábitos
+  - CRUD completo de hábitos, cada uno asignado a un stat
+  - Check diario con XP reward, streaks y estado completed_today
+  - Filtros por stat en la página /habits
+
+  Sesiones de Foco
+  - Timer de deep work con título y meta asociada
+  - Historial de sesiones con calidad (1-5) y notas
+  - Las sesiones alimentan el stat FOC
+
+  Metas
+  - Árbol jerárquico: Vida → Trimestral → Semanal → Diario
+  - Conexión entre metas y hábitos/quests
+
+  Misiones (Quests)
+  - Tipos: main / weekly / daily
+  - Generación automática desde metas reales
+  - Dar XP al completar
+
+  Coach IA
+  - Chat RPG con Claude (claude-haiku) que habla en lore narrativo
+  - Contexto completo del personaje inyectado en cada mensaje
+  - Quick actions + análisis semanal bajo demanda
+
+  Logros
+  - 18 logros con rareza bronze/silver/gold
+  - Se comprueban automáticamente al completar hábitos/quests
+  - Toasts animados + notificación del navegador
+
+  Analytics
+  - Métricas totales y de la semana
+  - Gráfica de completitud por día de semana
+  - Tabla de consistencia por hábito
+  - Stats de sesiones de foco
+
+  Review Semanal
+  - Resumen guiado con insights automáticos
+
+  Onboarding
+  - Wizard de 5 pasos: nombre → stats → hábitos sugeridos → meta de vida → clase revelada
+  - Crea automáticamente hábitos y meta al terminar
+
+  Multi-usuario
+  - Login / registro con JWT (60 días)
+  - Datos completamente aislados por usuario
+  - Settings: cambiar nombre, cambiar contraseña
+
+  PWA + Mobile
+  - Instalable como app (manifest + service worker)
+  - Bottom nav en móvil, sidebar en desktop
+  - Bottom sheet modals en móvil
+  - Safe area insets para iPhone notch
+
+  Landing page pública
+  - Marketing page en / sin auth, con hero, features y clases
+
+  ---
+  2. Siguientes pasos para sacarla al mercado
+
+  Prioridad alta (antes de lanzar)
+
+  ┌─────┬─────────────────────────────────────────────────────────────────────────────┬─────────────────────────────┐
+  │  #  │                                    Tarea                                    │           Por qué           │
+  ├─────┼─────────────────────────────────────────────────────────────────────────────┼─────────────────────────────┤
+  │ 1   │ Subir a GitHub y hacer deploy en Render                                     │ Sin deploy no hay nada que  │
+  │     │                                                                             │ mostrar                     │
+  ├─────┼─────────────────────────────────────────────────────────────────────────────┼─────────────────────────────┤
+  │ 2   │ Decay de stats real — ahora mismo los stats solo suben. Necesitan bajar si  │ El core loop del RPG        │
+  │     │ no haces los hábitos varios días                                            │ depende de esto             │
+  ├─────┼─────────────────────────────────────────────────────────────────────────────┼─────────────────────────────┤
+  │ 3   │ Dominio propio (axisrpg.app o similar)                                      │ Credibilidad                │
+  ├─────┼─────────────────────────────────────────────────────────────────────────────┼─────────────────────────────┤
+  │ 4   │ Recuperación de contraseña via email (SendGrid/Resend)                      │ Retención de usuarios       │
+  ├─────┼─────────────────────────────────────────────────────────────────────────────┼─────────────────────────────┤
+  │ 5   │ Tests mínimos de backend (pytest)                                           │ Evitar regresiones al       │
+  │     │                                                                             │ crecer                      │
+  └─────┴─────────────────────────────────────────────────────────────────────────────┴─────────────────────────────┘
+
+  Prioridad media (primera semana post-lanzamiento)
+
+  - Estadísticas de personaje más ricas — historial SVG de evolución de cada stat (ya hay endpoint, falta UI completa)
+  - Modo oscuro/claro toggle — actualmente solo oscuro
+  - Compartir personaje — URL pública con snapshot del personaje (viral loop)
+  - Streak en el dashboard — mostrar racha actual prominentemente, es el gancho de retención más fuerte
+  - Límite de hábitos gratuitos (5-7) para modelo freemium
+
+  Para monetización
+
+  - Plan Pro ($4-6/mes): hábitos ilimitados, Coach IA sin límite de mensajes, analytics avanzados, temas de personaje
+  - Exportar datos como feature de pago
+  - Quests personalizadas por el Coach IA (generación inteligente, no hardcoded)
+  - Clases secretas desbloqueables solo en Pro
+
+  Crecimiento
+
+  - ProductHunt launch
+  - Reddit: r/getdisciplined, r/habitica, r/selfimprovement
+  - Video demo de 60s mostrando el loop hábito → XP → level up → clase
+
+  ---
+  3. Cómo iniciar la app desde 0
+
+  Requisitos
+
+  - Python 3.11+
+  - Node.js 20+
+  - (Opcional) PostgreSQL si quieres testar con la DB de producción
+
+  Backend
+
+  cd backend
+
+  # Crear entorno virtual
+  python -m venv venv
+  .\venv\Scripts\Activate.ps1
+
+  # Instalar dependencias
+  pip install -r requirements.txt
+
+  # Crear archivo .env (copiar del ejemplo)
+  Copy-Item .env.example .env
+  # Editar .env y añadir tu ANTHROPIC_API_KEY (solo si usas el Coach)
+
+  # Iniciar servidor (desde la raíz del proyecto, no desde /backend)
+  cd ..
+  uvicorn backend.main:app --reload --port 8000
+
+  El backend crea axis.db automáticamente en el primer arranque.
+
+  Frontend
+
+  cd frontend
+
+  # Instalar dependencias (solo primera vez)
+  npm install
+
+  # Iniciar servidor de desarrollo
+  npm run dev
+
+  Abre http://localhost:3000 → verás la landing page. Regístrate y empezará el onboarding.
+
+  Verificar que funciona
+
+  Frontend:  http://localhost:3000        (landing pública)
+  Dashboard: http://localhost:3000/home   (tras login)
+  Backend:   http://127.0.0.1:8000/docs  (Swagger UI con todos los endpoints)
+
+  Con Docker (todo en uno)
+
+  # Desde la raíz del proyecto
+  # Crear .env raíz con las variables necesarias
+  echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+  echo "SECRET_KEY=cambia-esto" >> .env
+
+  docker compose up --build
+
+  Levanta PostgreSQL + backend + frontend automáticamente.
+
+  Deploy en Render (producción)
+
+  1. Sube el proyecto a GitHub
+  2. Entra en render.com → New → Blueprint
+  3. Selecciona tu repo → detecta el render.yaml automáticamente
+  4. Añade ANTHROPIC_API_KEY en las env vars del servicio axis-backend
+  5. Deploy → en ~5 min tienes la app en producción con PostgreSQL gestionado

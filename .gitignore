@@ -1,0 +1,21 @@
+# Backend
+backend/.env
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/axis.db
+backend/.venv/
+backend/venv/
+
+# Frontend
+frontend/.env.local
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+
+# Docker
+.env
+
+# OS
+.DS_Store
+Thumbs.db
