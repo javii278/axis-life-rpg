@@ -171,3 +171,28 @@
   3. Selecciona tu repo → detecta el render.yaml automáticamente
   4. Añade ANTHROPIC_API_KEY en las env vars del servicio axis-backend
   5. Deploy → en ~5 min tienes la app en producción con PostgreSQL gestionado
+
+
+
+
+
+  1. Ve a hetzner.com → Sign up (pide tarjeta, no cobra hasta que crees algo)
+  2. Una vez dentro: Cloud → Projects → New Project → llámalo axis
+  3. Add Server:
+    - Location: Nuremberg o Helsinki (Europa, más cercano)
+    - Image: Ubuntu 24.04
+    - Type: CX22 (2 vCPU, 4GB RAM) → €4.49/mes — suficiente
+    - SSH Keys: clic en Add SSH Key (ve al paso 1b)
+    - Networking: deja todo por defecto
+  4. Clic en Create & Buy Now
+
+  Paso 1b — Crear SSH key (para conectarte sin contraseña):
+
+  Ejecuta esto en tu terminal de Windows:
+  ssh-keygen -t ed25519 -C "axis-server" -f "$env:USERPROFILE\.ssh\axis_hetzner"
+  Pulsa Enter dos veces (sin passphrase). Luego copia la clave pública:
+  Get-Content "$env:USERPROFILE\.ssh\axis_hetzner.pub"
+  Pega ese texto en Hetzner donde te pide la SSH Key.
+
+  ---
+  Cuando tengas la IP del servidor (te la muestra Hetzner tras crearlo), dímela y continuamos con el paso 2 — conectar y configurar todo.

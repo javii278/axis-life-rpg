@@ -28,7 +28,7 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const api = {
   auth: {
-    register: (data: { username: string; password: string; display_name?: string }) =>
+    register: (data: { username: string; password: string; display_name?: string; email?: string }) =>
       req<{ access_token: string; user_id: number; display_name: string }>("/auth/register", {
         method: "POST", body: JSON.stringify(data),
       }),
@@ -44,6 +44,14 @@ export const api = {
     changePassword: (data: { current_password: string; new_password: string }) =>
       req<{ ok: boolean }>("/auth/change-password", {
         method: "POST", body: JSON.stringify(data),
+      }),
+    forgotPassword: (email: string) =>
+      req<{ ok: boolean; message: string }>("/auth/forgot-password", {
+        method: "POST", body: JSON.stringify({ email }),
+      }),
+    resetPassword: (token: string, new_password: string) =>
+      req<{ ok: boolean }>("/auth/reset-password", {
+        method: "POST", body: JSON.stringify({ token, new_password }),
       }),
   },
 

@@ -133,6 +133,7 @@ def complete_habit(habit_id: int, payload: HabitLogCreate, db: Session = Depends
 
     log = HabitLog(habit_id=habit_id, **payload.model_dump())
     db.add(log)
+    db.commit()  # commit primero para que el streak incluya el log de hoy
 
     from backend.models import Character
     character = db.query(Character).filter(Character.user_id == current_user.id).first()
@@ -142,8 +143,7 @@ def complete_habit(habit_id: int, payload: HabitLogCreate, db: Session = Depends
         streak = calculate_streak(habit, db)
         xp_gained = int(habit.xp_reward * streak_multiplier(streak))
         character.total_xp += xp_gained
-
-    db.commit()
+        db.commit()
     updated_character = recalculate_character(current_user.id, db)
 
     from backend.core.achievements_engine import check_achievements

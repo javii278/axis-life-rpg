@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AchievementBadge } from "@/components/achievements/AchievementBadge";
 import { useToast } from "@/components/ui/ToastProvider";
+import { api } from "@/lib/api";
 
 interface Achievement {
   key: string;
@@ -14,32 +15,42 @@ interface Achievement {
   unlocked_at: string | null;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
-
 export default function AchievementsPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [filter, setFilter] = useState<"all" | "unlocked" | "locked">("all");
-  const { showToast } = useToast();
+  const { showToast, showAchievement } = useToast();
 
-  useEffect(() => {
-    fetch(`${API}/api/achievements/`)
-      .then((r) => r.json())
-      .then(setAchievements)
-      .finally(() => setLoading(false));
+  const loadAchievements = useCallback(async () => {
+    try {
+      const data = await api.achievements.list() as Achievement[];
+      setAchievements(Array.isArray(data) ? data : []);
+    } catch {
+      setAchievements([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => { loadAchievements(); }, [loadAchievements]);
+
   const handleCheck = async () => {
-    const res = await fetch(`${API}/api/achievements/check`, { method: "POST" });
-    const data = await res.json();
-    if (data.newly_unlocked?.length > 0) {
-      data.newly_unlocked.forEach((a: { name: string; icon: string; rarity: string }) => {
-        showToast({ type: "achievement", title: "¡Logro Desbloqueado!", message: a.name, icon: a.icon, rarity: a.rarity, duration: 6000 });
-      });
-      // Recargar lista
-      fetch(`${API}/api/achievements/`).then((r) => r.json()).then(setAchievements);
-    } else {
-      showToast({ type: "info", title: "Sin logros nuevos", icon: "🔍" });
+    setChecking(true);
+    try {
+      const data = await api.achievements.check() as any;
+      if (data.newly_unlocked?.length > 0) {
+        data.newly_unlocked.forEach((a: { name: string; icon: string; rarity: string }) =>
+          showAchievement(a)
+        );
+        await loadAchievements();
+      } else {
+        showToast({ type: "info", title: "Sin logros nuevos", icon: "🔍" });
+      }
+    } catch {
+      showToast({ type: "warning", title: "Error al comprobar logros", icon: "⚠️" });
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -53,49 +64,46 @@ export default function AchievementsPage() {
   const totalXp = achievements.filter((a) => a.unlocked).reduce((s, a) => s + a.xp_bonus, 0);
 
   return (
-    <div className="min-h-screen bg-bg-primary p-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold font-display text-white">Logros</h1>
-        <p className="text-white/40 mt-1">Hitos desbloqueados en tu viaje</p>
+      <div>
+        <h1 className="text-2xl font-display font-bold text-white">Logros</h1>
+        <p className="text-gray-500 text-sm mt-1">Hitos desbloqueados en tu viaje</p>
       </div>
 
-      {/* Stats bar */}
-      <div className="flex gap-4 mb-6 flex-wrap">
-        <div className="bg-bg-card rounded-xl px-5 py-3 border border-white/10 flex gap-2 items-center">
+      {/* Stats + acción */}
+      <div className="flex gap-4 flex-wrap items-center">
+        <div className="bg-bg-card rounded-xl px-5 py-3 border border-[#2d2d4a] flex gap-3 items-center">
           <span className="text-2xl">🏆</span>
           <div>
-            <p className="text-xs text-white/40">Desbloqueados</p>
-            <p className="text-xl font-bold text-white">{unlockedCount} / {achievements.length}</p>
+            <p className="text-xs text-gray-500 font-mono">Desbloqueados</p>
+            <p className="text-xl font-display font-bold text-white">{unlockedCount} / {achievements.length}</p>
           </div>
         </div>
-        <div className="bg-bg-card rounded-xl px-5 py-3 border border-white/10 flex gap-2 items-center">
+        <div className="bg-bg-card rounded-xl px-5 py-3 border border-[#2d2d4a] flex gap-3 items-center">
           <span className="text-2xl">✨</span>
           <div>
-            <p className="text-xs text-white/40">XP de logros</p>
-            <p className="text-xl font-bold text-accent-gold">+{totalXp}</p>
+            <p className="text-xs text-gray-500 font-mono">XP de logros</p>
+            <p className="text-xl font-display font-bold text-accent-gold">+{totalXp}</p>
           </div>
         </div>
-        <div className="ml-auto">
-          <button
-            onClick={handleCheck}
-            className="bg-accent-purple hover:bg-accent-purple/80 text-white font-semibold px-4 py-3 rounded-xl transition-colors text-sm"
-          >
-            Comprobar logros
-          </button>
-        </div>
+        <button
+          onClick={handleCheck}
+          disabled={checking}
+          className="ml-auto bg-accent-purple hover:bg-accent-purple/80 disabled:opacity-50 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm"
+        >
+          {checking ? "Comprobando..." : "Comprobar logros"}
+        </button>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 mb-6">
+      {/* Filtros */}
+      <div className="flex gap-2">
         {(["all", "unlocked", "locked"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              filter === f
-                ? "bg-accent-purple text-white"
-                : "bg-bg-card text-white/50 hover:text-white"
+              filter === f ? "bg-accent-purple text-white" : "bg-bg-card text-gray-500 hover:text-white border border-[#2d2d4a]"
             }`}
           >
             {f === "all" ? "Todos" : f === "unlocked" ? "Desbloqueados" : "Bloqueados"}
@@ -105,7 +113,14 @@ export default function AchievementsPage() {
 
       {/* Grid */}
       {loading ? (
-        <div className="text-white/30 text-center py-20">Cargando logros...</div>
+        <div className="text-center py-20">
+          <div className="w-8 h-8 rounded-full border-2 border-accent-purple border-t-transparent animate-spin mx-auto mb-3" />
+          <p className="text-gray-500 text-sm font-mono">Cargando logros...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-gray-600 text-sm">
+          {filter === "unlocked" ? "Aún no has desbloqueado ningún logro" : "No hay logros en esta categoría"}
+        </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {filtered.map((a) => (

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Repeat2, Timer, Target, Sword,
   CalendarCheck, ScrollText, MessageCircle, Trophy, LogOut, BarChart2, Settings
@@ -26,9 +26,10 @@ const NAV = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
-  const user = getStoredUser();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!isAuthenticated()) router.replace("/login");
   }, [router]);
 
@@ -37,7 +38,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login");
   }
 
-  if (!isAuthenticated()) return null;
+  // Devuelve null igual en servidor y cliente hasta que se monta → evita hydration mismatch
+  if (!mounted || !isAuthenticated()) return null;
+
+  const user = getStoredUser();
 
   return (
     <div className="flex min-h-screen min-h-dvh">

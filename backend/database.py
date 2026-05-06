@@ -44,6 +44,7 @@ def _migrate_add_auth_columns():
         for col, definition in [
             ("username", "VARCHAR(100)"),
             ("password_hash", "VARCHAR(200)"),
+            ("email", "VARCHAR(200)"),
         ]:
             try:
                 conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {definition}"))

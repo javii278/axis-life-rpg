@@ -1,6 +1,6 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, Flame, Trash2 } from "lucide-react";
+import { CheckCircle2, Circle, Flame, Trash2, Zap } from "lucide-react";
 import { Habit, STAT_META } from "@/lib/types";
 import { api } from "@/lib/api";
 import { useState } from "react";
@@ -13,19 +13,31 @@ interface Props {
 
 export function HabitCard({ habit, onUpdate }: Props) {
   const [loading, setLoading] = useState(false);
+  const [justCompleted, setJustCompleted] = useState(false);
   const meta = STAT_META[habit.stat_target];
   const today = new Date().toISOString().split("T")[0];
   const { showAchievement, showToast } = useToast();
 
   async function toggleComplete() {
+    if (loading) return;
     setLoading(true);
     try {
       if (habit.completed_today) {
         await api.habits.undoComplete(habit.id, today);
       } else {
         const result = await api.habits.complete(habit.id, { log_date: today }) as any;
-        showToast({ type: "success", title: `+${result.xp_gained} XP`, message: result.streak > 1 ? `🔥 Racha: ${result.streak} días` : undefined, icon: "✅", duration: 2500 });
-        result.new_achievements?.forEach((a: { name: string; icon: string; rarity: string }) => showAchievement(a));
+        setJustCompleted(true);
+        setTimeout(() => setJustCompleted(false), 600);
+        showToast({
+          type: "success",
+          title: `+${result.xp_gained} XP`,
+          message: result.streak > 1 ? `🔥 Racha de ${result.streak} días` : undefined,
+          icon: "✅",
+          duration: 2500,
+        });
+        result.new_achievements?.forEach((a: { name: string; icon: string; rarity: string }) =>
+          showAchievement(a)
+        );
       }
       onUpdate();
     } catch (e) {
@@ -41,70 +53,132 @@ export function HabitCard({ habit, onUpdate }: Props) {
     onUpdate();
   }
 
+  const done = habit.completed_today;
+
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 10 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      whileTap={{ scale: 0.98 }}
       className={`
-        flex items-center gap-4 p-4 rounded-xl border transition-colors group
-        ${habit.completed_today
-          ? "bg-bg-card border-[#2d2d4a] opacity-70"
-          : "bg-bg-card border-[#2d2d4a] hover:border-[#4a4a6a]"
+        relative flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-300 group overflow-hidden
+        ${done
+          ? "border-opacity-30 opacity-60"
+          : "hover:shadow-lg cursor-pointer"
         }
       `}
+      style={{
+        backgroundColor: done ? `${meta.color}08` : "#14141f",
+        borderColor: done ? `${meta.color}30` : justCompleted ? meta.color : "#2d2d4a",
+        boxShadow: justCompleted ? `0 0 20px ${meta.color}50` : done ? "none" : undefined,
+      }}
+      onClick={!done ? toggleComplete : undefined}
     >
-      {/* Checkbox */}
-      <button
-        onClick={toggleComplete}
-        disabled={loading}
-        className="flex-shrink-0 transition-transform hover:scale-110 disabled:opacity-50"
-      >
-        {habit.completed_today ? (
-          <CheckCircle2 size={24} style={{ color: meta.color }} />
-        ) : (
-          <Circle size={24} className="text-gray-600 hover:text-gray-400" />
+      {/* Flash de completado */}
+      <AnimatePresence>
+        {justCompleted && (
+          <motion.div
+            className="absolute inset-0 rounded-xl pointer-events-none"
+            style={{ backgroundColor: meta.color }}
+            initial={{ opacity: 0.25 }}
+            animate={{ opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          />
         )}
-      </button>
+      </AnimatePresence>
+
+      {/* Hover glow lateral */}
+      {!done && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{ backgroundColor: meta.color }}
+        />
+      )}
+
+      {/* Checkbox */}
+      <motion.button
+        onClick={(e) => { e.stopPropagation(); toggleComplete(); }}
+        disabled={loading}
+        whileHover={{ scale: 1.15 }}
+        whileTap={{ scale: 0.85 }}
+        className="flex-shrink-0 disabled:opacity-50"
+      >
+        <AnimatePresence mode="wait">
+          {done ? (
+            <motion.div
+              key="done"
+              initial={{ scale: 0, rotate: -90 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            >
+              <CheckCircle2 size={22} style={{ color: meta.color }} />
+            </motion.div>
+          ) : (
+            <motion.div key="empty" initial={{ scale: 1 }} animate={{ scale: 1 }}>
+              <Circle size={22} className="text-gray-600 group-hover:text-gray-400 transition-colors" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span
-            className={`text-sm font-medium ${habit.completed_today ? "line-through text-gray-500" : "text-white"}`}
-          >
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-sm font-medium leading-tight ${done ? "line-through text-gray-500" : "text-white"}`}>
             {habit.name}
           </span>
           <span
-            className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
-            style={{ backgroundColor: `${meta.color}20`, color: meta.color }}
+            className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md flex-shrink-0"
+            style={{ backgroundColor: `${meta.color}18`, color: meta.color }}
           >
             {habit.stat_target}
           </span>
         </div>
         {habit.description && (
-          <p className="text-xs text-gray-500 truncate mt-0.5">{habit.description}</p>
+          <p className="text-[11px] text-gray-500 truncate mt-0.5">{habit.description}</p>
         )}
       </div>
 
       {/* Streak */}
-      {habit.streak > 0 && (
-        <div className="flex items-center gap-1 text-accent-gold">
-          <Flame size={14} />
-          <span className="text-xs font-mono font-bold">{habit.streak}</span>
-        </div>
-      )}
+      <AnimatePresence>
+        {habit.streak > 0 && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="flex items-center gap-0.5 flex-shrink-0"
+          >
+            <motion.div
+              animate={habit.streak >= 7 ? { scale: [1, 1.2, 1] } : {}}
+              transition={{ repeat: Infinity, duration: 2 }}
+            >
+              <Flame
+                size={13}
+                className={habit.streak >= 7 ? "text-orange-400" : "text-accent-gold"}
+                fill={habit.streak >= 14 ? "currentColor" : "none"}
+              />
+            </motion.div>
+            <span className={`text-xs font-mono font-bold ${habit.streak >= 7 ? "text-orange-400" : "text-accent-gold"}`}>
+              {habit.streak}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* XP badge */}
-      <span className="text-xs font-mono text-gray-500">+{habit.xp_reward}xp</span>
+      {/* XP */}
+      <div className="flex items-center gap-0.5 flex-shrink-0">
+        <Zap size={10} className="text-gray-600" />
+        <span className="text-[11px] font-mono text-gray-600">{habit.xp_reward}</span>
+      </div>
 
       {/* Delete */}
       <button
-        onClick={deleteHabit}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400"
+        onClick={(e) => { e.stopPropagation(); deleteHabit(); }}
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 flex-shrink-0 p-1"
       >
-        <Trash2 size={14} />
+        <Trash2 size={13} />
       </button>
     </motion.div>
   );

@@ -18,33 +18,27 @@ body {
   font-family: 'Space Grotesk', sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
-  /* Evita el scroll horizontal accidental en móvil */
   overflow-x: hidden;
-  /* Soporte para área segura en iPhones con notch */
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Safe area para el bottom nav en iOS */
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
-}
+/* ── Safe area iOS ────────────────────────────────────────── */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
-/* Tap target mínimo en móvil */
+/* ── Tap targets móvil ────────────────────────────────────── */
 @media (max-width: 1024px) {
-  button, a {
-    min-height: 44px;
-  }
-  /* Quita scrollbar en móvil */
   ::-webkit-scrollbar { display: none; }
+  /* Solo nav/action buttons, no los de formulario */
+  nav button, nav a, .bottom-nav a { min-height: 44px; }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #12121a; }
+/* ── Scrollbar desktop ────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #0a0a0f; }
 ::-webkit-scrollbar-thumb { background: #2d2d4a; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
-/* Scanline sutil sobre cards RPG */
+/* ── Scanline sobre cards RPG ─────────────────────────────── */
 .scanline::after {
   content: '';
   position: absolute;
@@ -53,21 +47,67 @@ body {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0,0,0,0.03) 2px,
-    rgba(0,0,0,0.03) 4px
+    rgba(0,0,0,0.025) 2px,
+    rgba(0,0,0,0.025) 4px
   );
   pointer-events: none;
   border-radius: inherit;
 }
 
-/* Glow para stats */
-.glow-purple { box-shadow: 0 0 12px rgba(124, 58, 237, 0.4); }
-.glow-cyan   { box-shadow: 0 0 12px rgba(6, 182, 212, 0.4); }
-.glow-gold   { box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+/* ── Glow classes ─────────────────────────────────────────── */
+.glow-purple { box-shadow: 0 0 16px rgba(124, 58, 237, 0.45); }
+.glow-cyan   { box-shadow: 0 0 16px rgba(6, 182, 212, 0.45); }
+.glow-gold   { box-shadow: 0 0 16px rgba(245, 158, 11, 0.45); }
+.glow-red    { box-shadow: 0 0 16px rgba(239, 68, 68, 0.45); }
+.glow-green  { box-shadow: 0 0 16px rgba(16, 185, 129, 0.45); }
 
-/* Animación pulso suave para sesión activa */
+/* ── Shimmer en barras ────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.shimmer-bar {
+  animation: shimmer 2.5s ease-in-out infinite;
+  background-size: 200% 100%;
+}
+
+/* ── Pulse de sesión activa ───────────────────────────────── */
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 8px rgba(6, 182, 212, 0.3); }
-  50%       { box-shadow: 0 0 20px rgba(6, 182, 212, 0.7); }
+  50%       { box-shadow: 0 0 24px rgba(6, 182, 212, 0.7); }
 }
 .pulse-active { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ── Float suave (sprites) ────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+.float { animation: float 3s ease-in-out infinite; }
+
+/* ── Entrada de elementos ─────────────────────────────────── */
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-in { animation: slide-in 0.3s cubic-bezier(0.34, 1.2, 0.64, 1); }
+.animate-fade-in  { animation: fade-in  0.25s ease-out; }
+
+/* Gradiente sutil en el layout dashboard (no en login/landing) */
+.dashboard-bg {
+  background-image:
+    radial-gradient(ellipse 60% 40% at 80% 10%, rgba(124,58,237,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 10% 80%, rgba(6,182,212,0.03) 0%, transparent 70%);
+}
+
+/* ── Texto con gradiente (título hero) ───────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa, #7c3aed, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
