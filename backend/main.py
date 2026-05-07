@@ -1,13 +1,18 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from backend.database import init_db
+from backend.core.limiter import limiter
 from backend.api.routes import habits, character, focus, goals, quests, coach, achievements, analytics
 from backend.api.routes import auth
 
 app = FastAPI(title="Axis API", version="0.2.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _cors_origins = [
     "http://localhost:3000",
