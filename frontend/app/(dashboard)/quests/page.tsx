@@ -70,13 +70,26 @@ export default function QuestsPage() {
       ) : quests.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="text-center py-20"
+          className="flex flex-col items-center text-center py-16 gap-4"
         >
-          <div className="text-5xl mb-4">⚔️</div>
-          <p className="text-gray-500 text-sm mb-2">No hay misiones activas.</p>
-          <p className="text-gray-600 text-xs">
-            Genera misiones desde tus metas o créalas manualmente.
-          </p>
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl">
+            🗺️
+          </div>
+          <div>
+            <p className="text-white font-display font-semibold mb-1">Sin misiones activas</p>
+            <p className="text-gray-500 text-sm max-w-xs">
+              Las misiones convierten tus metas en objetivos concretos con recompensa de XP.
+            </p>
+          </div>
+          <button
+            onClick={generateFromGoals}
+            disabled={generating}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber-600/80 hover:bg-amber-600
+                       text-white text-sm font-display font-semibold transition-colors disabled:opacity-50"
+          >
+            <Wand2 size={15} />
+            {generating ? "Generando..." : "Generar desde mis metas"}
+          </button>
         </motion.div>
       ) : (
         <div className="space-y-8">

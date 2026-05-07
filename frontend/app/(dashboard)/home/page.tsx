@@ -274,19 +274,27 @@ export default function Dashboard() {
             </motion.div>
 
             {/* Misiones activas */}
-            {quests.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
-                <div className="flex justify-between items-center mb-3">
-                  <h2 className="text-xs font-mono text-gray-400 uppercase tracking-widest">Misiones Activas</h2>
-                  <Link href="/quests" className="flex items-center gap-1 text-xs text-accent-purple_light hover:text-white transition-colors font-mono">
-                    <ScrollText size={12} /> Ver todas
-                  </Link>
-                </div>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-xs font-mono text-gray-400 uppercase tracking-widest">Misiones Activas</h2>
+                <Link href="/quests" className="flex items-center gap-1 text-xs text-accent-purple_light hover:text-white transition-colors font-mono">
+                  <ScrollText size={12} /> Ver todas
+                </Link>
+              </div>
+              {quests.length > 0 ? (
                 <div className="space-y-2">
                   {quests.map(q => <QuestCard key={q.id} quest={q} onUpdate={fetchAll} />)}
                 </div>
-              </motion.div>
-            )}
+              ) : (
+                <Link href="/quests" className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-[#2d2d4a] hover:border-accent-purple/40 transition-colors group">
+                  <span className="text-xl">🗺️</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-500 text-xs group-hover:text-gray-300 transition-colors">Sin misiones activas</p>
+                    <p className="text-accent-purple_light text-xs font-mono mt-0.5">Generar desde metas →</p>
+                  </div>
+                </Link>
+              )}
+            </motion.div>
 
             {/* Hábitos completados */}
             {doneHabits.length > 0 && (

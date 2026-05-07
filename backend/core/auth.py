@@ -11,9 +11,17 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import User
 
-SECRET_KEY = os.getenv("JWT_SECRET", "axis-dev-secret-change-in-production")
+_secret = os.getenv("JWT_SECRET")
+if not _secret:
+    import warnings
+    warnings.warn(
+        "JWT_SECRET no configurado — usando clave insegura. Configura JWT_SECRET en producción.",
+        stacklevel=2,
+    )
+    _secret = "axis-dev-secret-change-in-production"
+SECRET_KEY: str = _secret
 ALGORITHM = "HS256"
-TOKEN_EXPIRE_DAYS = 60
+TOKEN_EXPIRE_DAYS = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)

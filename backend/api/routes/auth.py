@@ -1,6 +1,6 @@
 import secrets
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from backend.database import get_db
 from backend.models import User, PasswordResetToken
 from backend.core.auth import hash_password, verify_password, create_access_token, get_current_user
 from backend.core.email import send_reset_email
+from backend.core.limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -32,7 +33,8 @@ class AuthOut(BaseModel):
 
 
 @router.post("/register", response_model=AuthOut)
-def register(payload: RegisterPayload, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, payload: RegisterPayload, db: Session = Depends(get_db)):
     username = payload.username.strip().lower()
     if not username or len(payload.password) < 4:
         raise HTTPException(status_code=400, detail="Usuario y contraseña requeridos (mín. 4 caracteres)")
@@ -72,7 +74,8 @@ def register(payload: RegisterPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=AuthOut)
-def login(payload: LoginPayload, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, payload: LoginPayload, db: Session = Depends(get_db)):
     username = payload.username.strip().lower()
     user = db.query(User).filter(User.username == username).first()
     if not user or not user.password_hash or not verify_password(payload.password, user.password_hash):
@@ -142,7 +145,8 @@ class ResetPasswordPayload(BaseModel):
 
 
 @router.post("/forgot-password")
-def forgot_password(payload: ForgotPasswordPayload, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def forgot_password(request: Request, payload: ForgotPasswordPayload, db: Session = Depends(get_db)):
     email = payload.email.strip().lower()
     user = db.query(User).filter(User.email == email).first()
 

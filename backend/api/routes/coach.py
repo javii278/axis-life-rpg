@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/coach", tags=["coach"])
 
 
 class ChatMessage(BaseModel):
-    message: str
+    message: str = Field(..., min_length=1, max_length=1000)
 
 
 @router.post("/chat")

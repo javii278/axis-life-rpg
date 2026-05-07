@@ -64,13 +64,33 @@ export default function HabitsPage() {
       {loading ? (
         <div className="text-gray-600 text-sm font-mono animate-pulse">Cargando...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-600">
-          <p className="text-4xl mb-3">📋</p>
-          <p className="text-sm">No hay hábitos{filter !== "ALL" ? ` de ${filter}` : ""}.</p>
-          <button onClick={() => setModalOpen(true)} className="mt-3 text-accent-purple_light text-sm hover:underline">
-            Crear uno ahora
-          </button>
-        </div>
+        filter !== "ALL" ? (
+          <div className="text-center py-16 text-gray-600">
+            <p className="text-sm">No hay hábitos de <span className="text-white font-mono">{filter}</span>.</p>
+            <button onClick={() => setModalOpen(true)} className="mt-3 text-accent-purple_light text-sm hover:underline">
+              Crear uno
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center text-center py-16 gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-accent-purple/10 border border-accent-purple/20 flex items-center justify-center text-3xl">
+              ⚔️
+            </div>
+            <div>
+              <p className="text-white font-display font-semibold mb-1">Tu aventura no ha comenzado</p>
+              <p className="text-gray-500 text-sm max-w-xs">
+                Los hábitos alimentan tus stats. Sin hábitos, tu personaje no evoluciona.
+              </p>
+            </div>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent-purple hover:bg-accent-purple/80
+                         text-white text-sm font-display font-semibold transition-colors"
+            >
+              <Plus size={15} /> Crear mi primer hábito
+            </button>
+          </div>
+        )
       ) : (
         <div className="space-y-2">
           {filtered.map(h => <HabitCard key={h.id} habit={h} onUpdate={fetchHabits} />)}
