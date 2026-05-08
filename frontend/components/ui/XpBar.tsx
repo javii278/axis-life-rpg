@@ -12,7 +12,9 @@ export function XpBar({ currentXp, xpToNext, level }: Props) {
   const xpInLevel = currentXp - xpForCurrent;
   const xpNeeded = xpToNext - xpForCurrent;
   const pct = Math.min((xpInLevel / xpNeeded) * 100, 100);
+  const remaining = xpNeeded - xpInLevel;
   const nearLevelUp = pct >= 80;
+  const veryClose = pct >= 95;
 
   return (
     <div className="w-full">
@@ -43,7 +45,6 @@ export function XpBar({ currentXp, xpToNext, level }: Props) {
           />
         </motion.div>
 
-        {/* Tick marks cada 25% */}
         {[25, 50, 75].map(p => (
           <div
             key={p}
@@ -53,15 +54,34 @@ export function XpBar({ currentXp, xpToNext, level }: Props) {
         ))}
       </div>
 
-      {nearLevelUp && (
-        <motion.p
-          className="text-[10px] text-accent-gold font-mono mt-1 text-right"
-          animate={{ opacity: [0.6, 1, 0.6] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-        >
-          ¡Casi nivel {level + 1}!
-        </motion.p>
-      )}
+      {/* XP restante — siempre visible, gancho psicológico constante */}
+      <div className="flex items-center justify-between mt-1.5">
+        {veryClose ? (
+          <motion.span
+            className="text-[10px] font-mono text-accent-gold"
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            transition={{ repeat: Infinity, duration: 1.2 }}
+          >
+            ¡{remaining.toLocaleString()} XP para Nivel {level + 1}!
+          </motion.span>
+        ) : nearLevelUp ? (
+          <motion.span
+            className="text-[10px] font-mono"
+            style={{ color: "#f59e0b" }}
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{ repeat: Infinity, duration: 1.8 }}
+          >
+            Faltan {remaining.toLocaleString()} XP · Nivel {level + 1}
+          </motion.span>
+        ) : (
+          <span className="text-[10px] font-mono text-gray-600">
+            Faltan{" "}
+            <span className="text-gray-400 font-semibold">{remaining.toLocaleString()} XP</span>
+            {" "}· Nivel {level + 1}
+          </span>
+        )}
+        <span className="text-[10px] font-mono text-gray-700">{Math.round(pct)}%</span>
+      </div>
     </div>
   );
 }

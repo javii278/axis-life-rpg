@@ -23,6 +23,8 @@ class CharacterOut(BaseModel):
     dis: float
     cre: float
     vol: float
+    streak_shields: int = 1
+    login_streak: int = 0
 
     class Config:
         from_attributes = True
@@ -96,4 +98,6 @@ def _to_out(character: Character) -> CharacterOut:
         dis=character.dis,
         cre=character.cre,
         vol=character.vol,
+        streak_shields=character.streak_shields,
+        login_streak=character.login_streak,
     )

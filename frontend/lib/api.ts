@@ -53,6 +53,8 @@ export const api = {
       req<{ ok: boolean }>("/auth/reset-password", {
         method: "POST", body: JSON.stringify({ token, new_password }),
       }),
+    dailyCheckin: () =>
+      req("/auth/daily-checkin", { method: "POST" }),
   },
 
   // ── Character ───────────────────────────────────────────────────────────────
@@ -75,6 +77,8 @@ export const api = {
       req(`/habits/${id}/complete`, { method: "POST", body: JSON.stringify(data) }),
     undoComplete: (id: number, logDate: string) =>
       req(`/habits/${id}/complete/${logDate}`, { method: "DELETE" }),
+    useShield: (id: number) =>
+      req(`/habits/${id}/shield`, { method: "POST" }),
   },
 
   // ── Focus ───────────────────────────────────────────────────────────────────
@@ -112,6 +116,11 @@ export const api = {
   // ── Analytics ────────────────────────────────────────────────────────────────
   analytics: {
     summary: () => req("/analytics/summary"),
+  },
+
+  // ── Leaderboard ──────────────────────────────────────────────────────────────
+  leaderboard: {
+    weekly: () => req("/leaderboard/weekly"),
   },
 
   // ── Goals ───────────────────────────────────────────────────────────────────

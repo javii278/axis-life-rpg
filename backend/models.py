@@ -66,6 +66,12 @@ class Character(Base):
     cre: Mapped[float] = mapped_column(Float, default=0.0)
     vol: Mapped[float] = mapped_column(Float, default=0.0)
 
+    # Gamificación de retención
+    streak_shields: Mapped[int] = mapped_column(Integer, default=1)
+    last_shield_grant: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    login_streak: Mapped[int] = mapped_column(Integer, default=0)
+    last_login_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user: Mapped["User"] = relationship(back_populates="character")

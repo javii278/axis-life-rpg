@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -9,6 +9,9 @@ from backend.models import User, PasswordResetToken
 from backend.core.auth import hash_password, verify_password, create_access_token, get_current_user
 from backend.core.email import send_reset_email, send_welcome_email
 from backend.core.limiter import limiter
+
+# XP por día del ciclo de 7 días (el 7º da escudo extra)
+_LOGIN_BONUS = {1: 20, 2: 30, 3: 40, 4: 50, 5: 60, 6: 70, 7: 100}
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -172,6 +175,65 @@ def forgot_password(request: Request, payload: ForgotPasswordPayload, db: Sessio
         send_reset_email(to_email=email, token=token, username=user.username or user.name)
 
     return {"ok": True, "message": "Si ese email está registrado, recibirás un enlace en breve."}
+
+
+@router.post("/daily-checkin")
+def daily_checkin(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Reclama el bonus de login diario. Idempotente: solo da XP una vez por día."""
+    from backend.models import Character
+    from backend.core.stats_engine import recalculate_character
+
+    character = db.query(Character).filter(Character.user_id == current_user.id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
+
+    today = date.today()
+
+    if character.last_login_date == today:
+        day_in_cycle = ((character.login_streak - 1) % 7) + 1
+        return {
+            "already_claimed": True,
+            "login_streak": character.login_streak,
+            "day_in_cycle": day_in_cycle,
+            "xp_gained": 0,
+            "shields_remaining": character.streak_shields,
+        }
+
+    # Racha rota si el último login fue hace más de 1 día
+    yesterday = today - timedelta(days=1)
+    if character.last_login_date and character.last_login_date < yesterday:
+        character.login_streak = 1
+    else:
+        character.login_streak = (character.login_streak or 0) + 1
+
+    character.last_login_date = today
+
+    day_in_cycle = ((character.login_streak - 1) % 7) + 1
+    xp = _LOGIN_BONUS.get(day_in_cycle, 20)
+    character.total_xp += xp
+
+    # Día 7 del ciclo: bonus de escudo extra (máx 3)
+    if day_in_cycle == 7:
+        character.streak_shields = min((character.streak_shields or 0) + 1, 3)
+
+    # Conceder escudo semanal si es una semana nueva
+    current_iso_week = today.isocalendar()[:2]
+    last_grant_week = character.last_shield_grant.isocalendar()[:2] if character.last_shield_grant else None
+    if last_grant_week != current_iso_week:
+        character.streak_shields = min((character.streak_shields or 0) + 1, 3)
+        character.last_shield_grant = today
+
+    db.commit()
+    recalculate_character(current_user.id, db)
+
+    return {
+        "already_claimed": False,
+        "login_streak": character.login_streak,
+        "day_in_cycle": day_in_cycle,
+        "xp_gained": xp,
+        "shields_remaining": character.streak_shields,
+        "shield_granted": day_in_cycle == 7,
+    }
 
 
 @router.post("/reset-password")

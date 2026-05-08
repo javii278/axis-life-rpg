@@ -22,6 +22,26 @@ export interface Character {
   dis: number;
   cre: number;
   vol: number;
+  streak_shields: number;
+  login_streak: number;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  character_class: string;
+  level: number;
+  weekly_xp: number;
+  is_me: boolean;
+}
+
+export interface DailyCheckin {
+  already_claimed: boolean;
+  login_streak: number;
+  day_in_cycle: number;
+  xp_gained: number;
+  shields_remaining: number;
+  shield_granted?: boolean;
 }
 
 export interface Habit {

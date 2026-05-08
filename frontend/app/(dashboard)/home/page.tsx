@@ -14,9 +14,87 @@ import { CreateHabitModal } from "@/components/habits/CreateHabitModal";
 import { Plus, ScrollText, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { NotificationBell } from "@/components/ui/NotificationBell";
+import { useNotifications } from "@/hooks/useNotifications";
+import { LoginBonusModal } from "@/components/ui/LoginBonusModal";
+import { LeaderboardCard } from "@/components/ui/LeaderboardCard";
+import { DailyCheckin, LeaderboardEntry } from "@/lib/types";
 
 const LEVEL_KEY = "axis_last_level";
 const ONBOARDING_KEY = "axis_onboarded";
+const CHECKIN_KEY = "axis_checkin_date";
+
+// Barra de progreso diario — gancho psicológico principal
+function DailyProgressBar({ done, total }: { done: number; total: number }) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const allDone = total > 0 && done === total;
+  const hour = new Date().getHours();
+  const isLate = hour >= 21;
+
+  type MotivationKey = "done" | "danger" | "start" | "early" | "mid" | "close";
+  const key: MotivationKey = allDone
+    ? "done"
+    : isLate && pct < 50
+    ? "danger"
+    : pct === 0
+    ? "start"
+    : pct < 50
+    ? "early"
+    : pct < 90
+    ? "mid"
+    : "close";
+
+  const MESSAGES: Record<MotivationKey, { text: string; emoji: string; color: string }> = {
+    done:   { text: "¡Todo completado! Eres imparable.",         emoji: "🔥", color: "#10b981" },
+    danger: { text: "¡Racha en peligro! Completa antes de medianoche.", emoji: "⚠️", color: "#ef4444" },
+    start:  { text: "Comienza tu día — cada hábito suma XP.",    emoji: "⚡", color: "#7c3aed" },
+    early:  { text: "Buen comienzo. Mantén el impulso.",         emoji: "💪", color: "#7c3aed" },
+    mid:    { text: "A mitad de camino. ¡No pares ahora!",       emoji: "🎯", color: "#06b6d4" },
+    close:  { text: "¡Casi! Un último esfuerzo.",                emoji: "🏆", color: "#f59e0b" },
+  };
+
+  const { text, emoji, color } = MESSAGES[key];
+  const barGradient = allDone
+    ? "linear-gradient(90deg, #059669, #10b981)"
+    : isLate && pct < 50
+    ? "linear-gradient(90deg, #dc2626, #ef4444)"
+    : "linear-gradient(90deg, #5b21b6, #7c3aed, #a78bfa)";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-bg-card border border-[#2d2d4a] rounded-2xl p-4"
+    >
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-base flex-shrink-0">{emoji}</span>
+          <span className="text-xs font-mono text-gray-300 truncate">{text}</span>
+        </div>
+        <div className="flex-shrink-0 ml-3">
+          <span className="text-sm font-display font-bold" style={{ color }}>
+            {done}
+          </span>
+          <span className="text-xs font-mono text-gray-600">/{total}</span>
+        </div>
+      </div>
+
+      <div className="w-full h-3 bg-[#0d0d18] rounded-full overflow-hidden">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ background: barGradient }}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 1.4, ease: [0.34, 1.1, 0.64, 1] }}
+        />
+      </div>
+
+      <div className="flex justify-between text-[10px] font-mono mt-1.5">
+        <span className="text-gray-600 uppercase tracking-widest">Progreso hoy</span>
+        <span style={{ color }}>{pct}%</span>
+      </div>
+    </motion.div>
+  );
+}
 
 // Anillo SVG de progreso diario
 function DailyRing({ pct, done, total }: { pct: number; done: number; total: number }) {
@@ -60,6 +138,10 @@ export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [levelUpOpen, setLevelUpOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [checkin, setCheckin] = useState<DailyCheckin | null>(null);
+  const [checkinOpen, setCheckinOpen] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const { scheduleStreakDanger } = useNotifications();
 
   const fetchAll = useCallback(async () => {
     try {
@@ -75,10 +157,12 @@ export default function Dashboard() {
       if (storedLevel > 0 && c.level > storedLevel) setLevelUpOpen(true);
       localStorage.setItem(LEVEL_KEY, String(c.level));
 
+      const habitsData = hab as Habit[];
       setCharacter(c);
-      setHabits(hab as Habit[]);
+      setHabits(habitsData);
       setActiveSession(session as FocusSession | null);
       setQuests((activeQuests as Quest[]).slice(0, 3));
+      scheduleStreakDanger(habitsData);
     } catch (e: any) {
       if (e.message?.includes("404") || e.message?.includes("not found")) {
         router.replace("/onboarding");
@@ -87,9 +171,27 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, scheduleStreakDanger]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Daily checkin — solo se llama si no se hizo hoy (evita side-effects repetidos)
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (localStorage.getItem(CHECKIN_KEY) === today) return;
+    api.auth.dailyCheckin().then((data: any) => {
+      if (!data.already_claimed) {
+        localStorage.setItem(CHECKIN_KEY, today);
+        setCheckin(data as DailyCheckin);
+        setCheckinOpen(true);
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Leaderboard lazy — no bloquea la carga inicial
+  useEffect(() => {
+    api.leaderboard.weekly().then((data: any) => setLeaderboard(data as LeaderboardEntry[])).catch(() => {});
+  }, []);
 
   if (loading) {
     return (
@@ -215,10 +317,24 @@ export default function Dashboard() {
                 </div>
               </motion.div>
             )}
+
+            {/* Leaderboard semanal — desktop sidebar */}
+            {leaderboard.length > 0 && (
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
+                <LeaderboardCard entries={leaderboard} />
+              </motion.div>
+            )}
           </div>
 
           {/* ── Columna principal ──────────────────────────────── */}
           <div className="lg:col-span-2 space-y-5">
+            {/* Barra de progreso diario — gancho de retención principal */}
+            {habits.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
+                <DailyProgressBar done={doneHabits.length} total={habits.length} />
+              </motion.div>
+            )}
+
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
               <FocusTimer activeSession={activeSession} onUpdate={fetchAll} />
             </motion.div>
@@ -267,7 +383,7 @@ export default function Dashboard() {
                       )}
                     </motion.div>
                   ) : (
-                    todayHabits.map(h => <HabitCard key={h.id} habit={h} onUpdate={fetchAll} />)
+                    todayHabits.map(h => <HabitCard key={h.id} habit={h} onUpdate={fetchAll} shields={character?.streak_shields ?? 0} />)
                   )}
                 </div>
               </AnimatePresence>
@@ -320,6 +436,14 @@ export default function Dashboard() {
           characterClass={character.character_class}
           characterName={character.name}
           onDismiss={() => setLevelUpOpen(false)}
+        />
+      )}
+
+      {checkin && (
+        <LoginBonusModal
+          open={checkinOpen}
+          checkin={checkin}
+          onDismiss={() => setCheckinOpen(false)}
         />
       )}
     </>

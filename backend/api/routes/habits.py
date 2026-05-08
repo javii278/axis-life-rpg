@@ -164,6 +164,40 @@ def complete_habit(request: Request, habit_id: int, payload: HabitLogCreate, db:
     }
 
 
+@router.post("/{habit_id}/shield", status_code=200)
+def use_streak_shield(habit_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Usa un escudo de racha para marcar el hábito de hoy sin completarlo manualmente."""
+    from backend.models import Character
+    habit = db.query(Habit).filter(Habit.id == habit_id, Habit.user_id == current_user.id).first()
+    if not habit:
+        raise HTTPException(status_code=404, detail="Habit not found")
+
+    character = db.query(Character).filter(Character.user_id == current_user.id).first()
+    if not character or character.streak_shields < 1:
+        raise HTTPException(status_code=403, detail="No tienes escudos de racha disponibles")
+
+    today = date.today()
+    already_done = (
+        db.query(HabitLog)
+        .filter(HabitLog.habit_id == habit_id, HabitLog.log_date == today)
+        .first()
+    )
+    if already_done:
+        raise HTTPException(status_code=409, detail="Habit already completed today")
+
+    log = HabitLog(habit_id=habit_id, log_date=today, notes="__shield__")
+    db.add(log)
+    character.streak_shields -= 1
+    db.commit()
+
+    new_streak = calculate_streak(habit, db)
+    return {
+        "message": "Escudo usado",
+        "streak": new_streak,
+        "shields_remaining": character.streak_shields,
+    }
+
+
 @router.delete("/{habit_id}/complete/{log_date}", status_code=204)
 def undo_complete(habit_id: int, log_date: date, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     habit = db.query(Habit).filter(Habit.id == habit_id, Habit.user_id == current_user.id).first()

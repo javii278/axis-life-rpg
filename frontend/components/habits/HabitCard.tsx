@@ -1,6 +1,6 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, Flame, Trash2, Zap } from "lucide-react";
+import { CheckCircle2, Circle, Flame, Trash2, Zap, Shield } from "lucide-react";
 import { Habit, STAT_META } from "@/lib/types";
 import { api } from "@/lib/api";
 import { useState } from "react";
@@ -9,15 +9,40 @@ import { useToast } from "@/components/ui/ToastProvider";
 interface Props {
   habit: Habit;
   onUpdate: () => void;
+  shields?: number;
 }
 
-export function HabitCard({ habit, onUpdate }: Props) {
+export function HabitCard({ habit, onUpdate, shields = 0 }: Props) {
   const [loading, setLoading] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null);
+  const [shieldLoading, setShieldLoading] = useState(false);
   const meta = STAT_META[habit.stat_target];
   const today = new Date().toISOString().split("T")[0];
   const { showAchievement, showToast } = useToast();
+
+  const showShield = !habit.completed_today && habit.streak >= 3 && shields > 0;
+
+  async function useShield(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (shieldLoading) return;
+    setShieldLoading(true);
+    try {
+      const result = await api.habits.useShield(habit.id) as any;
+      setOptimisticDone(true);
+      showToast({
+        type: "success",
+        title: `🛡️ Escudo usado`,
+        message: `Racha de ${result.streak} días protegida · ${result.shields_remaining} escudos restantes`,
+        duration: 3000,
+      });
+      onUpdate();
+    } catch (e: any) {
+      showToast({ type: "success", title: "Sin escudos disponibles", message: e.message, duration: 2000 });
+    } finally {
+      setShieldLoading(false);
+    }
+  }
 
   // Derived: optimistic state overrides the prop until re-render syncs
   const done = optimisticDone ?? habit.completed_today;
@@ -183,6 +208,20 @@ export function HabitCard({ habit, onUpdate }: Props) {
         <Zap size={10} className="text-gray-600" />
         <span className="text-[11px] font-mono text-gray-600">{habit.xp_reward}</span>
       </div>
+
+      {/* Shield button — visible when streak >= 3 and shields available */}
+      {showShield && (
+        <motion.button
+          onClick={useShield}
+          disabled={shieldLoading}
+          title={`Usar escudo de racha (${shields} disponibles)`}
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
+          className="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-30"
+        >
+          <Shield size={13} className="text-cyan-400" />
+        </motion.button>
+      )}
 
       {/* Delete */}
       <button
