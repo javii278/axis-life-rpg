@@ -152,11 +152,32 @@ def complete_habit(request: Request, habit_id: int, payload: HabitLogCreate, db:
     newly_unlocked = check_achievements(current_user.id, db)
 
     streak = calculate_streak(habit, db)
+
+    # Cofre aleatorio cada múltiplo de 7 en la racha
+    chest_reward = None
+    if streak > 0 and streak % 7 == 0 and character:
+        import random as _rnd
+        roll = _rnd.random()
+        if roll < 0.45:
+            bonus_xp = _rnd.randint(50, 150)
+            character.total_xp += bonus_xp
+            chest_reward = {"type": "xp", "amount": bonus_xp}
+        elif roll < 0.75:
+            character.streak_shields = min((character.streak_shields or 0) + 1, 3)
+            chest_reward = {"type": "shield"}
+        else:
+            bonus_xp = _rnd.randint(30, 80)
+            character.total_xp += bonus_xp
+            character.streak_shields = min((character.streak_shields or 0) + 1, 3)
+            chest_reward = {"type": "both", "amount": bonus_xp}
+        db.commit()
+
     return {
         "message": "Habit completed",
         "xp_gained": xp_gained,
         "streak": streak,
         "character_level": updated_character.level if updated_character else 1,
+        "chest_reward": chest_reward,
         "new_achievements": [
             {"key": a.key, "name": a.name, "icon": a.icon, "rarity": a.rarity}
             for a in newly_unlocked

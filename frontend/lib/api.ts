@@ -62,6 +62,8 @@ export const api = {
     get: () => req("/character/"),
     create: (name: string) => req("/character/", { method: "POST", body: JSON.stringify({ name }) }),
     recalculate: () => req("/character/recalculate", { method: "POST" }),
+    chooseClass: (character_class: string) =>
+      req("/character/choose-class", { method: "POST", body: JSON.stringify({ character_class }) }),
     history: (days = 30) => req(`/character/history?days=${days}`),
   },
 
@@ -121,6 +123,12 @@ export const api = {
   // ── Leaderboard ──────────────────────────────────────────────────────────────
   leaderboard: {
     weekly: () => req("/leaderboard/weekly"),
+  },
+
+  // ── Events ───────────────────────────────────────────────────────────────────
+  events: {
+    active: () => req("/events/active"),
+    claim: () => req("/events/claim", { method: "POST" }),
   },
 
   // ── Goals ───────────────────────────────────────────────────────────────────

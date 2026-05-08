@@ -61,7 +61,10 @@ def _run_safe_migrations():
             except Exception:
                 pass
 
-        for col, definition in migrations_characters:
+        migrations_characters_v2 = [
+            ("class_locked", "BOOLEAN NOT NULL DEFAULT FALSE"),
+        ]
+        for col, definition in migrations_characters + migrations_characters_v2:
             try:
                 conn.execute(text(f"ALTER TABLE characters ADD COLUMN IF NOT EXISTS {col} {definition}"))
                 conn.commit()

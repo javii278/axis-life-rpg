@@ -7,7 +7,7 @@ from slowapi.errors import RateLimitExceeded
 
 from backend.database import init_db
 from backend.core.limiter import limiter
-from backend.api.routes import habits, character, focus, goals, quests, coach, achievements, analytics, leaderboard
+from backend.api.routes import habits, character, focus, goals, quests, coach, achievements, analytics, leaderboard, events
 from backend.api.routes import auth
 
 app = FastAPI(title="Axis API", version="0.2.0")
@@ -40,6 +40,7 @@ app.include_router(coach.router, prefix="/api")
 app.include_router(achievements.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 app.include_router(leaderboard.router, prefix="/api")
+app.include_router(events.router, prefix="/api")
 
 
 @app.on_event("startup")

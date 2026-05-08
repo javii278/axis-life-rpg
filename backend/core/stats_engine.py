@@ -195,7 +195,8 @@ def recalculate_character(user_id: int, db: Session) -> Character:
     character.dis = round(new_stats["dis"], 1)
     character.cre = round(new_stats["cre"], 1)
     character.vol = round(new_stats["vol"], 1)
-    character.character_class = determine_class(**new_stats)
+    if not character.class_locked:
+        character.character_class = determine_class(**new_stats)
 
     # Recalcular nivel
     while character.total_xp >= xp_for_level(character.level + 1):

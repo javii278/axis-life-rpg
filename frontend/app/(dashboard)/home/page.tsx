@@ -17,7 +17,9 @@ import { NotificationBell } from "@/components/ui/NotificationBell";
 import { useNotifications } from "@/hooks/useNotifications";
 import { LoginBonusModal } from "@/components/ui/LoginBonusModal";
 import { LeaderboardCard } from "@/components/ui/LeaderboardCard";
-import { DailyCheckin, LeaderboardEntry } from "@/lib/types";
+import { EventBanner } from "@/components/ui/EventBanner";
+import { ClassSelectionModal } from "@/components/character/ClassSelectionModal";
+import { DailyCheckin, LeaderboardEntry, SeasonalEvent } from "@/lib/types";
 
 const LEVEL_KEY = "axis_last_level";
 const ONBOARDING_KEY = "axis_onboarded";
@@ -141,6 +143,8 @@ export default function Dashboard() {
   const [checkin, setCheckin] = useState<DailyCheckin | null>(null);
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [activeEvent, setActiveEvent] = useState<SeasonalEvent | null>(null);
+  const [classModalOpen, setClassModalOpen] = useState(false);
   const { scheduleStreakDanger } = useNotifications();
 
   const fetchAll = useCallback(async () => {
@@ -192,6 +196,19 @@ export default function Dashboard() {
   useEffect(() => {
     api.leaderboard.weekly().then((data: any) => setLeaderboard(data as LeaderboardEntry[])).catch(() => {});
   }, []);
+
+  // Evento semanal activo
+  useEffect(() => {
+    api.events.active().then((data: any) => setActiveEvent(data as SeasonalEvent)).catch(() => {});
+  }, []);
+
+  // Árbol de clases: muestra modal si nivel >= 10 y clase no bloqueada
+  useEffect(() => {
+    if (character && character.level >= 10 && !character.class_locked) {
+      const dismissed = localStorage.getItem(`axis_class_dismissed_lv${character.level}`);
+      if (!dismissed) setClassModalOpen(true);
+    }
+  }, [character?.level, character?.class_locked]);
 
   if (loading) {
     return (
@@ -335,6 +352,13 @@ export default function Dashboard() {
               </motion.div>
             )}
 
+            {/* Evento semanal */}
+            {activeEvent && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+                <EventBanner event={activeEvent} onClaimed={fetchAll} />
+              </motion.div>
+            )}
+
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
               <FocusTimer activeSession={activeSession} onUpdate={fetchAll} />
             </motion.div>
@@ -444,6 +468,21 @@ export default function Dashboard() {
           open={checkinOpen}
           checkin={checkin}
           onDismiss={() => setCheckinOpen(false)}
+        />
+      )}
+
+      {character && (
+        <ClassSelectionModal
+          open={classModalOpen}
+          character={character}
+          onChosen={(updated) => {
+            setCharacter(updated);
+            setClassModalOpen(false);
+          }}
+          onDismiss={() => {
+            localStorage.setItem(`axis_class_dismissed_lv${character.level}`, "1");
+            setClassModalOpen(false);
+          }}
         />
       )}
     </>

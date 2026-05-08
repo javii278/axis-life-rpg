@@ -1,10 +1,11 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Circle, Flame, Trash2, Zap, Shield } from "lucide-react";
-import { Habit, STAT_META } from "@/lib/types";
+import { Habit, STAT_META, ChestReward } from "@/lib/types";
 import { api } from "@/lib/api";
 import { useState } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
+import { ChestModal } from "@/components/ui/ChestModal";
 
 interface Props {
   habit: Habit;
@@ -17,6 +18,8 @@ export function HabitCard({ habit, onUpdate, shields = 0 }: Props) {
   const [justCompleted, setJustCompleted] = useState(false);
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null);
   const [shieldLoading, setShieldLoading] = useState(false);
+  const [chestReward, setChestReward] = useState<ChestReward | null>(null);
+  const [chestStreak, setChestStreak] = useState(0);
   const meta = STAT_META[habit.stat_target];
   const today = new Date().toISOString().split("T")[0];
   const { showAchievement, showToast } = useToast();
@@ -75,6 +78,10 @@ export function HabitCard({ habit, onUpdate, shields = 0 }: Props) {
         result.new_achievements?.forEach((a: { name: string; icon: string; rarity: string }) =>
           showAchievement(a)
         );
+        if (result.chest_reward) {
+          setChestStreak(result.streak);
+          setChestReward(result.chest_reward);
+        }
       }
       onUpdate();
     } catch (e) {
@@ -230,6 +237,12 @@ export function HabitCard({ habit, onUpdate, shields = 0 }: Props) {
       >
         <Trash2 size={13} />
       </button>
+
+      <ChestModal
+        reward={chestReward}
+        streak={chestStreak}
+        onDismiss={() => { setChestReward(null); onUpdate(); }}
+      />
     </motion.div>
   );
 }

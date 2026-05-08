@@ -24,6 +24,28 @@ export interface Character {
   vol: number;
   streak_shields: number;
   login_streak: number;
+  class_locked: boolean;
+}
+
+export interface ChestReward {
+  type: "xp" | "shield" | "both";
+  amount?: number;
+}
+
+export interface SeasonalEvent {
+  key: string;
+  name: string;
+  theme: StatType;
+  emoji: string;
+  color: string;
+  description: string;
+  goal_type: string;
+  target_count: number;
+  xp_bonus: number;
+  current_progress: number;
+  completed: boolean;
+  days_remaining: number;
+  iso_week: string;
 }
 
 export interface LeaderboardEntry {

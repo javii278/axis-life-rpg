@@ -71,6 +71,7 @@ class Character(Base):
     last_shield_grant: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     login_streak: Mapped[int] = mapped_column(Integer, default=0)
     last_login_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    class_locked: Mapped[bool] = mapped_column(Boolean, default=False)
 
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

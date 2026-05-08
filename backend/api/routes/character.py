@@ -25,6 +25,7 @@ class CharacterOut(BaseModel):
     vol: float
     streak_shields: int = 1
     login_streak: int = 0
+    class_locked: bool = False
 
     class Config:
         from_attributes = True
@@ -83,6 +84,30 @@ def get_stat_history(days: int = 30, db: Session = Depends(get_db), current_user
     ]
 
 
+class ChooseClassPayload(BaseModel):
+    character_class: str
+
+
+@router.post("/choose-class", response_model=CharacterOut)
+def choose_class(payload: ChooseClassPayload, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from backend.models import CharacterClass
+    valid = {c.value for c in CharacterClass}
+    if payload.character_class not in valid:
+        raise HTTPException(status_code=400, detail="Clase no válida")
+
+    character = db.query(Character).filter(Character.user_id == current_user.id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
+    if character.level < 10:
+        raise HTTPException(status_code=403, detail="Se requiere nivel 10 para elegir clase")
+
+    character.character_class = payload.character_class
+    character.class_locked = True
+    db.commit()
+    db.refresh(character)
+    return _to_out(character)
+
+
 def _to_out(character: Character) -> CharacterOut:
     xp_next = xp_for_level(character.level + 1)
     return CharacterOut(
@@ -100,4 +125,5 @@ def _to_out(character: Character) -> CharacterOut:
         vol=character.vol,
         streak_shields=character.streak_shields,
         login_streak=character.login_streak,
+        class_locked=character.class_locked,
     )
