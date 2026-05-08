@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, Square, Star } from "lucide-react";
 import { FocusSession } from "@/lib/types";
 import { api } from "@/lib/api";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface Props {
   activeSession: FocusSession | null;
@@ -18,6 +19,7 @@ export function FocusTimer({ activeSession, onUpdate }: Props) {
   const [showEndForm, setShowEndForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { showToast, showAchievement } = useToast();
 
   // Tick cuando hay sesión activa
   useEffect(() => {
@@ -46,7 +48,17 @@ export function FocusTimer({ activeSession, onUpdate }: Props) {
     if (!activeSession || quality === 0) return;
     setLoading(true);
     try {
-      await api.focus.end(activeSession.id, { quality, notes: notes || undefined });
+      const result = await api.focus.end(activeSession.id, { quality, notes: notes || undefined }) as any;
+      showToast({
+        type: "success",
+        title: "Sesión completada",
+        message: result.xp_gained ? `+${result.xp_gained} XP · ${result.duration_minutes}min` : `${result.duration_minutes}min`,
+        icon: "🧠",
+        duration: 3000,
+      });
+      result.new_achievements?.forEach((a: { name: string; icon: string; rarity: string }) =>
+        showAchievement(a)
+      );
       setQuality(0); setNotes(""); setShowEndForm(false);
       onUpdate();
     } finally {

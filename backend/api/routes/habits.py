@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from backend.database import get_db
 from backend.models import Habit, HabitLog, StatType, HabitFrequency, User
 from backend.core.stats_engine import calculate_streak, recalculate_character
 from backend.core.auth import get_current_user
+from backend.core.limiter import limiter
 
 router = APIRouter(prefix="/habits", tags=["habits"])
 
@@ -118,7 +119,8 @@ def delete_habit(habit_id: int, db: Session = Depends(get_db), current_user: Use
 
 
 @router.post("/{habit_id}/complete", status_code=200)
-def complete_habit(habit_id: int, payload: HabitLogCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("60/hour")
+def complete_habit(request: Request, habit_id: int, payload: HabitLogCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     habit = db.query(Habit).filter(Habit.id == habit_id, Habit.user_id == current_user.id).first()
     if not habit:
         raise HTTPException(status_code=404, detail="Habit not found")

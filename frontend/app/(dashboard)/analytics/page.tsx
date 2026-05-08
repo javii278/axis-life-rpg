@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { STAT_META, StatType } from "@/lib/types";
+import { STAT_META, StatType, Character, StatSnapshot } from "@/lib/types";
+import { StatRadarChart } from "@/components/ui/StatRadarChart";
+import { StatsChart } from "@/components/ui/StatsChart";
 
 interface Summary {
   totals: { habits_completed: number; focus_hours: number; quests_done: number; level: number; total_xp: number };
@@ -16,12 +18,20 @@ interface Summary {
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<Summary | null>(null);
+  const [character, setCharacter] = useState<Character | null>(null);
+  const [history, setHistory] = useState<StatSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.analytics.summary()
-      .then(d => setData(d as Summary))
-      .finally(() => setLoading(false));
+    Promise.all([
+      api.analytics.summary(),
+      api.character.get(),
+      api.character.history(30),
+    ]).then(([summary, char, hist]) => {
+      setData(summary as Summary);
+      setCharacter(char as Character);
+      setHistory(hist as StatSnapshot[]);
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="text-gray-500 font-mono text-sm animate-pulse pt-20 text-center">Calculando estadísticas...</div>;
@@ -35,6 +45,27 @@ export default function AnalyticsPage() {
         <h1 className="text-3xl font-bold font-display text-white">Analytics</h1>
         <p className="text-white/40 mt-1">Tu progreso en números reales</p>
       </div>
+
+      {/* ── Stats actuales: radar + historial ───────────────────────────────── */}
+      {character && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-bg-card border border-white/10 rounded-2xl p-5">
+            <h2 className="text-xs font-mono text-white/40 uppercase tracking-widest mb-4">Stats actuales</h2>
+            <StatRadarChart character={character} />
+          </div>
+
+          <div className="bg-bg-card border border-white/10 rounded-2xl p-5">
+            <h2 className="text-xs font-mono text-white/40 uppercase tracking-widest mb-4">Evolución 30 días</h2>
+            {history.length >= 2 ? (
+              <StatsChart data={history} />
+            ) : (
+              <div className="flex items-center justify-center h-32 text-gray-600 text-sm font-mono">
+                Datos disponibles desde mañana
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Totales ──────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import User, PasswordResetToken
 from backend.core.auth import hash_password, verify_password, create_access_token, get_current_user
-from backend.core.email import send_reset_email
+from backend.core.email import send_reset_email, send_welcome_email
 from backend.core.limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -70,6 +70,8 @@ def register(request: Request, payload: RegisterPayload, db: Session = Depends(g
     db.add(user)
     db.commit()
     db.refresh(user)
+    if email:
+        send_welcome_email(to_email=email, username=display)
     return AuthOut(access_token=create_access_token(user.id), user_id=user.id, display_name=user.name)
 
 

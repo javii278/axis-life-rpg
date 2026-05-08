@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from backend.database import get_db
 from backend.models import FocusSession, Character, User
 from backend.core.stats_engine import recalculate_character
 from backend.core.auth import get_current_user
+from backend.core.limiter import limiter
 
 router = APIRouter(prefix="/focus", tags=["focus"])
 
@@ -58,8 +59,9 @@ def start_session(payload: FocusSessionCreate, db: Session = Depends(get_db), cu
     return _to_out(session)
 
 
-@router.post("/{session_id}/end", response_model=FocusSessionOut)
-def end_session(session_id: int, payload: FocusSessionEnd, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@router.post("/{session_id}/end")
+@limiter.limit("20/hour")
+def end_session(request: Request, session_id: int, payload: FocusSessionEnd, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if not 1 <= payload.quality <= 5:
         raise HTTPException(status_code=422, detail="Quality must be between 1 and 5")
 
@@ -87,7 +89,20 @@ def end_session(session_id: int, payload: FocusSessionEnd, db: Session = Depends
     db.commit()
     recalculate_character(current_user.id, db)
     db.refresh(session)
-    return _to_out(session)
+
+    from backend.core.achievements_engine import check_achievements
+    newly_unlocked = check_achievements(current_user.id, db)
+
+    return {
+        "message": "Session ended",
+        "xp_gained": xp_gained,
+        "duration_minutes": duration,
+        "quality": payload.quality,
+        "new_achievements": [
+            {"key": a.key, "name": a.name, "icon": a.icon, "rarity": a.rarity}
+            for a in newly_unlocked
+        ],
+    }
 
 
 @router.get("/active", response_model=Optional[FocusSessionOut])

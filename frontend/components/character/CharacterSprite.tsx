@@ -114,6 +114,20 @@ function GlowFilter({ id, color, level }: { id: string; color: string; level: nu
   );
 }
 
+// Level tier thresholds and their visual indicator
+const TIER_CONFIG = {
+  legend: { min: 30, emoji: "👑", color: "#fbbf24", shadow: "0 0 8px #fbbf24aa" },
+  veteran: { min: 20, emoji: "🏆", color: "#f59e0b", shadow: "0 0 6px #f59e0b88" },
+  adept:   { min: 10, emoji: "✦",  color: "#a78bfa", shadow: "0 0 5px #a78bfa88" },
+} as const;
+
+function getLevelTier(level: number) {
+  if (level >= TIER_CONFIG.legend.min) return TIER_CONFIG.legend;
+  if (level >= TIER_CONFIG.veteran.min) return TIER_CONFIG.veteran;
+  if (level >= TIER_CONFIG.adept.min)   return TIER_CONFIG.adept;
+  return null;
+}
+
 interface Props {
   characterClass: CharacterClass;
   level: number;
@@ -124,13 +138,32 @@ export function CharacterSprite({ characterClass, level, size = 160 }: Props) {
   const pal = PALETTES[characterClass];
   const glowColor = CLASS_GLOW[characterClass];
   const filterId = `glow-${characterClass}`;
+  const tier = getLevelTier(level);
 
   return (
     <motion.div
-      style={{ height: size, display: "flex", alignItems: "center", justifyContent: "center" }}
+      style={{ height: size, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}
       animate={{ y: [0, -4, 0] }}
       transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
     >
+      {tier && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            fontSize: Math.round(size * 0.14),
+            lineHeight: 1,
+            filter: `drop-shadow(${tier.shadow})`,
+            zIndex: 1,
+            pointerEvents: "none",
+          }}
+          aria-hidden="true"
+        >
+          {tier.emoji}
+        </div>
+      )}
       <svg
         viewBox={VB}
         style={{ height: size, imageRendering: "pixelated" }}

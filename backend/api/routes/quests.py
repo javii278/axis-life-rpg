@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from backend.database import get_db
 from backend.models import Quest, Goal, Character, QuestType, User
 from backend.core.stats_engine import recalculate_character
 from backend.core.auth import get_current_user
+from backend.core.limiter import limiter
 
 router = APIRouter(prefix="/quests", tags=["quests"])
 
@@ -88,7 +89,8 @@ def generate_from_goals(db: Session = Depends(get_db), current_user: User = Depe
 
 
 @router.post("/{quest_id}/complete")
-def complete_quest(quest_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@limiter.limit("30/hour")
+def complete_quest(request: Request, quest_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     quest = db.query(Quest).filter(Quest.id == quest_id, Quest.user_id == current_user.id).first()
     if not quest:
         raise HTTPException(status_code=404, detail="Quest not found")

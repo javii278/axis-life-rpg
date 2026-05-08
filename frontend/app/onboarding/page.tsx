@@ -120,10 +120,17 @@ export default function OnboardingPage() {
       // Crear personaje
       await api.character.create(charName || "Héroe");
 
-      // Crear hábitos seleccionados
-      const habitsToCreate = suggestedHabits.filter((_, i) => selectedHabits.has(`${i}`));
+      // Crear hábitos seleccionados — cada uno con su stat correcto
+      const habitsToCreate: { name: string; description: string; xp: number; stat: string }[] = [];
+      selectedStats.forEach((stat, si) => {
+        (HABIT_SUGGESTIONS[stat] ?? []).forEach((h, hi) => {
+          if (selectedHabits.has(`${si * 3 + hi}`)) {
+            habitsToCreate.push({ ...h, stat });
+          }
+        });
+      });
       await Promise.all(habitsToCreate.map(h =>
-        api.habits.create({ name: h.name, description: h.description, stat_target: selectedStats[0] || "DIS", xp_reward: h.xp })
+        api.habits.create({ name: h.name, description: h.description, stat_target: h.stat, xp_reward: h.xp })
       ));
 
       // Crear meta de vida

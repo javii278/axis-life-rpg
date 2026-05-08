@@ -14,20 +14,32 @@ interface Props {
 export function HabitCard({ habit, onUpdate }: Props) {
   const [loading, setLoading] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
+  const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null);
   const meta = STAT_META[habit.stat_target];
   const today = new Date().toISOString().split("T")[0];
   const { showAchievement, showToast } = useToast();
 
+  // Derived: optimistic state overrides the prop until re-render syncs
+  const done = optimisticDone ?? habit.completed_today;
+
   async function toggleComplete() {
     if (loading) return;
     setLoading(true);
+
+    if (!habit.completed_today) {
+      // Optimistically mark as done immediately
+      setOptimisticDone(true);
+      setJustCompleted(true);
+      setTimeout(() => setJustCompleted(false), 600);
+    } else {
+      setOptimisticDone(false);
+    }
+
     try {
       if (habit.completed_today) {
         await api.habits.undoComplete(habit.id, today);
       } else {
         const result = await api.habits.complete(habit.id, { log_date: today }) as any;
-        setJustCompleted(true);
-        setTimeout(() => setJustCompleted(false), 600);
         showToast({
           type: "success",
           title: `+${result.xp_gained} XP`,
@@ -41,6 +53,7 @@ export function HabitCard({ habit, onUpdate }: Props) {
       }
       onUpdate();
     } catch (e) {
+      setOptimisticDone(null);  // revert on error
       console.error(e);
     } finally {
       setLoading(false);
@@ -52,8 +65,6 @@ export function HabitCard({ habit, onUpdate }: Props) {
     await api.habits.delete(habit.id);
     onUpdate();
   }
-
-  const done = habit.completed_today;
 
   return (
     <motion.div
