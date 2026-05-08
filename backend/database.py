@@ -33,21 +33,37 @@ def get_db():
 def init_db():
     from backend import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
-    if _is_sqlite:
-        _migrate_add_auth_columns()
+    _run_safe_migrations()
 
 
-def _migrate_add_auth_columns():
-    """Añade columnas de auth a users si no existen (SQLite, migración no destructiva)."""
+def _run_safe_migrations():
+    """Añade columnas nuevas si no existen. Idempotente en SQLite y PostgreSQL."""
     from sqlalchemy import text
+
+    # Sintaxis compatible: ADD COLUMN IF NOT EXISTS (PostgreSQL 9.6+, SQLite 3.35+)
+    migrations_users = [
+        ("username",      "VARCHAR(100)"),
+        ("password_hash", "VARCHAR(200)"),
+        ("email",         "VARCHAR(200)"),
+    ]
+    migrations_characters = [
+        ("streak_shields",    "INTEGER NOT NULL DEFAULT 1"),
+        ("last_shield_grant", "DATE"),
+        ("login_streak",      "INTEGER NOT NULL DEFAULT 0"),
+        ("last_login_date",   "DATE"),
+    ]
+
     with engine.connect() as conn:
-        for col, definition in [
-            ("username", "VARCHAR(100)"),
-            ("password_hash", "VARCHAR(200)"),
-            ("email", "VARCHAR(200)"),
-        ]:
+        for col, definition in migrations_users:
             try:
-                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {definition}"))
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {definition}"))
                 conn.commit()
             except Exception:
-                pass  # La columna ya existe
+                pass
+
+        for col, definition in migrations_characters:
+            try:
+                conn.execute(text(f"ALTER TABLE characters ADD COLUMN IF NOT EXISTS {col} {definition}"))
+                conn.commit()
+            except Exception:
+                pass
