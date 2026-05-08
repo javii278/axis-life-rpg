@@ -145,33 +145,38 @@ export default function Dashboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [activeEvent, setActiveEvent] = useState<SeasonalEvent | null>(null);
   const [classModalOpen, setClassModalOpen] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const { scheduleStreakDanger } = useNotifications();
 
   const fetchAll = useCallback(async () => {
     try {
-      const [char, hab, session, activeQuests] = await Promise.all([
-        api.character.get(),
-        api.habits.list(),
-        api.focus.active(),
-        api.quests.list(false),
+      // Primero el personaje — si no existe (404) redirigimos a onboarding
+      const char = await api.character.get() as Character;
+
+      const storedLevel = parseInt(localStorage.getItem(LEVEL_KEY) ?? "0", 10);
+      if (storedLevel > 0 && char.level > storedLevel) setLevelUpOpen(true);
+      localStorage.setItem(LEVEL_KEY, String(char.level));
+      setCharacter(char);
+
+      // El resto falla de forma independiente para no romper el dashboard completo
+      const [hab, session, activeQuests] = await Promise.all([
+        api.habits.list().catch(() => [] as Habit[]),
+        api.focus.active().catch(() => null),
+        api.quests.list(false).catch(() => [] as Quest[]),
       ]);
 
-      const c = char as Character;
-      const storedLevel = parseInt(localStorage.getItem(LEVEL_KEY) ?? "0", 10);
-      if (storedLevel > 0 && c.level > storedLevel) setLevelUpOpen(true);
-      localStorage.setItem(LEVEL_KEY, String(c.level));
-
       const habitsData = hab as Habit[];
-      setCharacter(c);
       setHabits(habitsData);
       setActiveSession(session as FocusSession | null);
       setQuests((activeQuests as Quest[]).slice(0, 3));
       scheduleStreakDanger(habitsData);
     } catch (e: any) {
-      if (e.message?.includes("404") || e.message?.includes("not found")) {
+      if (e.message?.includes("404") || e.message?.includes("not found") || e.message?.includes("Character not found")) {
         router.replace("/onboarding");
         return;
       }
+      // En cualquier otro error (500, red) mostramos un estado de error con reintento
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -220,6 +225,30 @@ export default function Dashboard() {
         >
           <div className="w-8 h-8 rounded-full border-2 border-accent-purple border-t-transparent animate-spin" />
           <span className="text-gray-500 font-mono text-xs">Iniciando Axis...</span>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <motion.div
+          className="flex flex-col items-center gap-4 text-center max-w-sm"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="text-4xl">⚠️</div>
+          <div>
+            <p className="text-white font-semibold mb-1">Error de conexión</p>
+            <p className="text-gray-500 text-sm">No se pudo conectar al servidor. Revisa que el backend está activo.</p>
+          </div>
+          <button
+            onClick={() => { setFetchError(false); setLoading(true); fetchAll(); }}
+            className="px-4 py-2 rounded-xl bg-accent-purple hover:bg-accent-purple/80 text-white text-sm font-semibold transition-colors"
+          >
+            Reintentar
+          </button>
         </motion.div>
       </div>
     );

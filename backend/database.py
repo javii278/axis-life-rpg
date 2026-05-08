@@ -37,10 +37,19 @@ def init_db():
 
 
 def _run_safe_migrations():
-    """Añade columnas nuevas si no existen. Idempotente en SQLite y PostgreSQL."""
+    """Añade columnas nuevas si no existen. Compatible con SQLite 3.31+ y PostgreSQL 9.6+."""
     from sqlalchemy import text
 
-    # Sintaxis compatible: ADD COLUMN IF NOT EXISTS (PostgreSQL 9.6+, SQLite 3.35+)
+    def _col_exists(conn, table: str, col: str) -> bool:
+        if _is_sqlite:
+            rows = conn.execute(text(f"PRAGMA table_info({table})")).fetchall()
+            return any(row[1] == col for row in rows)
+        result = conn.execute(text(
+            "SELECT COUNT(*) FROM information_schema.columns "
+            "WHERE table_name = :t AND column_name = :c"
+        ), {"t": table, "c": col}).scalar()
+        return bool(result)
+
     migrations_users = [
         ("username",      "VARCHAR(100)"),
         ("password_hash", "VARCHAR(200)"),
@@ -51,22 +60,22 @@ def _run_safe_migrations():
         ("last_shield_grant", "DATE"),
         ("login_streak",      "INTEGER NOT NULL DEFAULT 0"),
         ("last_login_date",   "DATE"),
+        ("class_locked",      "BOOLEAN NOT NULL DEFAULT FALSE"),
     ]
 
     with engine.connect() as conn:
         for col, definition in migrations_users:
-            try:
-                conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {definition}"))
-                conn.commit()
-            except Exception:
-                pass
+            if not _col_exists(conn, "users", col):
+                try:
+                    conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {definition}"))
+                    conn.commit()
+                except Exception:
+                    pass
 
-        migrations_characters_v2 = [
-            ("class_locked", "BOOLEAN NOT NULL DEFAULT FALSE"),
-        ]
-        for col, definition in migrations_characters + migrations_characters_v2:
-            try:
-                conn.execute(text(f"ALTER TABLE characters ADD COLUMN IF NOT EXISTS {col} {definition}"))
-                conn.commit()
-            except Exception:
-                pass
+        for col, definition in migrations_characters:
+            if not _col_exists(conn, "characters", col):
+                try:
+                    conn.execute(text(f"ALTER TABLE characters ADD COLUMN {col} {definition}"))
+                    conn.commit()
+                except Exception:
+                    pass
