@@ -29,10 +29,11 @@ export interface Character {
   equipped_title: string | null;
   equipped_aura: string | null;
   equipped_border: string | null;
+  equipped_skin: string | null;
 }
 
 export type CosmeticRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
-export type CosmeticCategory = "title" | "aura" | "border";
+export type CosmeticCategory = "title" | "aura" | "border" | "skin";
 
 export interface CosmeticItem {
   key: string;

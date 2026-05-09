@@ -55,7 +55,7 @@ export default function CharacterPage() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-6">
           {/* Sprite */}
           <div className="w-28 flex-shrink-0 flex items-center justify-center">
-            <CharacterSprite characterClass={character.character_class} level={character.level} size={112} />
+            <CharacterSprite characterClass={character.character_class} level={character.level} size={112} auraColor={character.equipped_aura} skinKey={character.equipped_skin} />
           </div>
 
           <div className="flex-1 min-w-0">

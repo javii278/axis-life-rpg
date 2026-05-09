@@ -84,6 +84,7 @@ class Character(Base):
     equipped_title: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     equipped_aura: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     equipped_border: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    equipped_skin: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

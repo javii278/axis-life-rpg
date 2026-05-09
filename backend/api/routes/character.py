@@ -32,6 +32,7 @@ class CharacterOut(BaseModel):
     equipped_title: Optional[str] = None
     equipped_aura: Optional[str] = None
     equipped_border: Optional[str] = None
+    equipped_skin: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -189,4 +190,5 @@ def _to_out(character: Character) -> CharacterOut:
         equipped_title=character.equipped_title,
         equipped_aura=character.equipped_aura,
         equipped_border=character.equipped_border,
+        equipped_skin=character.equipped_skin,
     )

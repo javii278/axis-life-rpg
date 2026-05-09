@@ -7,7 +7,7 @@ from backend.core.auth import get_current_user
 
 router = APIRouter(prefix="/shop", tags=["shop"])
 
-_CATEGORY_FIELD = {"title": "equipped_title", "aura": "equipped_aura", "border": "equipped_border"}
+_CATEGORY_FIELD = {"title": "equipped_title", "aura": "equipped_aura", "border": "equipped_border", "skin": "equipped_skin"}
 
 
 @router.get("/")
@@ -22,6 +22,7 @@ def list_shop(db: Session = Depends(get_db), current_user: User = Depends(get_cu
         "title":  character.equipped_title  if character else None,
         "aura":   character.equipped_aura   if character else None,
         "border": character.equipped_border if character else None,
+        "skin":   character.equipped_skin   if character else None,
     }
 
     return [

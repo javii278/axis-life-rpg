@@ -70,6 +70,7 @@ def _run_safe_migrations():
         ("equipped_title",     "VARCHAR(100)"),
         ("equipped_aura",      "VARCHAR(50)"),
         ("equipped_border",    "VARCHAR(50)"),
+        ("equipped_skin",      "VARCHAR(50)"),
     ]
 
     with engine.connect() as conn:
@@ -111,6 +112,17 @@ _SHOP_CATALOG = [
     {"key": "border_gold",    "name": "Marco Dorado",     "category": "border", "value": "gold",    "price": 150, "description": "Un borde digno de campeones",                "rarity": "uncommon",  "emoji": "🏅"},
     {"key": "border_crystal", "name": "Marco Cristalino", "category": "border", "value": "crystal", "price": 220, "description": "Transparente como tus intenciones",          "rarity": "rare",      "emoji": "💠"},
     {"key": "border_royal",   "name": "Marco Real",       "category": "border", "value": "royal",   "price": 320, "description": "Para el personaje que lo tiene todo",        "rarity": "epic",      "emoji": "👑"},
+    # ── Skins ────────────────────────────────────────────────────────────────
+    {"key": "skin_shadow",   "name": "Sombra",      "category": "skin", "value": "shadow",   "price": 120, "description": "Un guerrero que emerge de la oscuridad",           "rarity": "uncommon",  "emoji": "🌑"},
+    {"key": "skin_gold",     "name": "Dorado",      "category": "skin", "value": "gold",     "price": 150, "description": "El brillo del éxito en cada píxel",               "rarity": "uncommon",  "emoji": "✨"},
+    {"key": "skin_fire",     "name": "Llamas",      "category": "skin", "value": "fire",     "price": 130, "description": "Forjado en el fuego de la disciplina",             "rarity": "uncommon",  "emoji": "🔥"},
+    {"key": "skin_ice",      "name": "Glacial",     "category": "skin", "value": "ice",      "price": 130, "description": "La calma del hielo, la fuerza del acero",          "rarity": "uncommon",  "emoji": "❄️"},
+    {"key": "skin_nature",   "name": "Naturaleza",  "category": "skin", "value": "nature",   "price": 110, "description": "En armonía con el mundo que te rodea",             "rarity": "common",    "emoji": "🌿"},
+    {"key": "skin_neon",     "name": "Neón",        "category": "skin", "value": "neon",     "price": 180, "description": "Directo del futuro digital",                       "rarity": "rare",      "emoji": "💜"},
+    {"key": "skin_ghost",    "name": "Espectro",    "category": "skin", "value": "ghost",    "price": 250, "description": "Entre el mundo de los vivos y algo más",           "rarity": "rare",      "emoji": "👻"},
+    {"key": "skin_crimson",  "name": "Carmesí",     "category": "skin", "value": "crimson",  "price": 160, "description": "La determinación hecha color",                     "rarity": "rare",      "emoji": "🩸"},
+    {"key": "skin_void",     "name": "Vacío",       "category": "skin", "value": "void",     "price": 300, "description": "El poder que existe más allá de los límites",      "rarity": "epic",      "emoji": "🕳️"},
+    {"key": "skin_cosmic",   "name": "Cósmico",     "category": "skin", "value": "cosmic",   "price": 400, "description": "Nacido entre las estrellas, destinado a brillar",  "rarity": "legendary", "emoji": "🌌"},
 ]
 
 

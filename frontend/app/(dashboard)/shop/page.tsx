@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CosmeticItem, CosmeticCategory, CosmeticRarity } from "@/lib/types";
+import { CosmeticItem, CosmeticCategory, CosmeticRarity, CharacterClass } from "@/lib/types";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/ToastProvider";
 import { ShoppingBag } from "lucide-react";
+import { CharacterSprite } from "@/components/character/CharacterSprite";
 
 const RARITY_STYLE: Record<CosmeticRarity, { label: string; color: string; bg: string }> = {
   common:    { label: "Común",      color: "#9ca3af", bg: "#374151" },
@@ -15,7 +16,7 @@ const RARITY_STYLE: Record<CosmeticRarity, { label: string; color: string; bg: s
 };
 
 const CATEGORY_LABELS: Record<CosmeticCategory | "all", string> = {
-  all: "Todos", title: "Títulos", aura: "Auras", border: "Marcos",
+  all: "Todos", title: "Títulos", aura: "Auras", border: "Marcos", skin: "Skins",
 };
 
 function CoinDisplay({ coins }: { coins: number }) {
@@ -29,10 +30,11 @@ function CoinDisplay({ coins }: { coins: number }) {
 }
 
 function ItemCard({
-  item, coins, onBuy, onEquip, onUnequip, loading,
+  item, coins, characterClass, onBuy, onEquip, onUnequip, loading,
 }: {
   item: CosmeticItem;
   coins: number;
+  characterClass: CharacterClass;
   onBuy: () => void;
   onEquip: () => void;
   onUnequip: () => void;
@@ -60,8 +62,14 @@ function ItemCard({
         />
       )}
 
-      {/* Emoji */}
-      <div className="text-4xl mb-3 text-center">{item.emoji}</div>
+      {/* Skin preview or emoji */}
+      {item.category === "skin" ? (
+        <div className="flex justify-center mb-2">
+          <CharacterSprite characterClass={characterClass} level={1} size={72} skinKey={item.value} />
+        </div>
+      ) : (
+        <div className="text-4xl mb-3 text-center">{item.emoji}</div>
+      )}
 
       {/* Name + rarity */}
       <div className="flex items-start justify-between gap-2 mb-1">
@@ -116,6 +124,7 @@ function ItemCard({
 export default function ShopPage() {
   const [items, setItems] = useState<CosmeticItem[]>([]);
   const [coins, setCoins] = useState(0);
+  const [characterClass, setCharacterClass] = useState<CharacterClass>("Novice");
   const [filter, setFilter] = useState<CosmeticCategory | "all">("all");
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -129,6 +138,7 @@ export default function ShopPage() {
       ]);
       setItems(shopData);
       setCoins(charData.coins ?? 0);
+      setCharacterClass((charData.character_class as CharacterClass) ?? "Novice");
     } finally {
       setPageLoading(false);
     }
@@ -222,7 +232,7 @@ export default function ShopPage() {
 
       {/* Filtros */}
       <div className="flex gap-2 flex-wrap">
-        {(["all", "title", "aura", "border"] as const).map(cat => (
+        {(["all", "title", "aura", "border", "skin"] as const).map(cat => (
           <button
             key={cat}
             onClick={() => setFilter(cat)}
@@ -251,6 +261,7 @@ export default function ShopPage() {
               key={item.key}
               item={item}
               coins={coins}
+              characterClass={characterClass}
               onBuy={() => handleBuy(item)}
               onEquip={() => handleEquip(item)}
               onUnequip={() => handleUnequip(item)}

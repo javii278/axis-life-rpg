@@ -26,6 +26,20 @@ const CLASS_GLOW: Record<CharacterClass, string> = {
   Monk:"#f97316",    Explorer:"#10b981",  Guardian:"#f59e0b", Novice:"#6b7280",
 };
 
+// Cada skin sobreescribe parte de la paleta base del personaje
+const SKIN_OVERRIDES: Record<string, Partial<Pal>> = {
+  shadow:  { primary:"#1f2937", dark:"#111827", helmet:"#374151", boot:"#030712", eye:"#ef4444" },
+  gold:    { primary:"#d97706", dark:"#92400e", helmet:"#fbbf24", boot:"#78350f", eye:"#1e3a8a" },
+  fire:    { primary:"#dc2626", dark:"#7f1d1d", helmet:"#f97316", boot:"#450a0a", eye:"#fbbf24" },
+  ice:     { primary:"#0891b2", dark:"#164e63", helmet:"#67e8f9", boot:"#083344", eye:"#a78bfa" },
+  nature:  { primary:"#16a34a", dark:"#14532d", helmet:"#86efac", boot:"#052e16", eye:"#fbbf24" },
+  neon:    { primary:"#7c3aed", dark:"#4c1d95", helmet:"#a78bfa", boot:"#2e1065", eye:"#06b6d4", skin:"#e9d5ff" },
+  ghost:   { primary:"#d1d5db", dark:"#9ca3af", helmet:"#f3f4f6", boot:"#6b7280", eye:"#a78bfa", skin:"#f9fafb" },
+  crimson: { primary:"#9f1239", dark:"#4c0519", helmet:"#fb7185", boot:"#3b0764", eye:"#fbbf24" },
+  void:    { primary:"#1e1b4b", dark:"#0f0a2e", helmet:"#312e81", boot:"#07061a", eye:"#818cf8", skin:"#c7d2fe" },
+  cosmic:  { primary:"#5b21b6", dark:"#2e1065", helmet:"#7c3aed", boot:"#09090b", eye:"#f0abfc", skin:"#fae8ff" },
+};
+
 function r(x: number, y: number, w: number, h: number, fill: string, k?: string) {
   return <rect key={k ?? `${x}${y}${w}${h}`} x={x*S} y={y*S} width={w*S} height={h*S} fill={fill} shapeRendering="crispEdges" />;
 }
@@ -132,11 +146,13 @@ interface Props {
   characterClass: CharacterClass;
   level: number;
   size?: number;
-  auraColor?: string | null; // override glow: hex color o "rainbow"
+  auraColor?: string | null;
+  skinKey?: string | null;
 }
 
-export function CharacterSprite({ characterClass, level, size = 160, auraColor }: Props) {
-  const pal = PALETTES[characterClass];
+export function CharacterSprite({ characterClass, level, size = 160, auraColor, skinKey }: Props) {
+  const basePal = PALETTES[characterClass];
+  const pal = skinKey && SKIN_OVERRIDES[skinKey] ? { ...basePal, ...SKIN_OVERRIDES[skinKey] } : basePal;
   const baseGlow = CLASS_GLOW[characterClass];
   const isRainbow = auraColor === "rainbow";
   const glowColor = (!auraColor || isRainbow) ? baseGlow : auraColor;
