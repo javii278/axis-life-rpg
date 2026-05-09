@@ -212,9 +212,10 @@ def daily_checkin(current_user: User = Depends(get_current_user), db: Session = 
     xp = _LOGIN_BONUS.get(day_in_cycle, 20)
     character.total_xp += xp
 
-    # Día 7 del ciclo: bonus de escudo extra (máx 3)
+    # Día 7 del ciclo: bonus de escudo + monedas extra
     if day_in_cycle == 7:
         character.streak_shields = min((character.streak_shields or 0) + 1, 3)
+        character.coins = (character.coins or 0) + 5
 
     # Conceder escudo semanal si es una semana nueva
     current_iso_week = today.isocalendar()[:2]

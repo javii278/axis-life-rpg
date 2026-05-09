@@ -180,10 +180,18 @@ def complete_habit(request: Request, habit_id: int, payload: HabitLogCreate, db:
     )
     perfect_day = (total_daily > 0 and done_today_count >= total_daily)
     perfect_day_xp = 0
+    coins_gained = 0
+    if character:
+        coins_per_habit = 1 + min(combo_count, 2)  # 1, 2 o 3 monedas según combo
+        character.coins = (character.coins or 0) + coins_per_habit
+        coins_gained += coins_per_habit
     if perfect_day and character:
         perfect_day_xp = 50
         character.total_xp += perfect_day_xp
         xp_gained += perfect_day_xp
+        character.coins = (character.coins or 0) + 10
+        coins_gained += 10
+    if character:
         db.commit()
 
     # Jefe semanal: recibir daño
@@ -234,6 +242,7 @@ def complete_habit(request: Request, habit_id: int, payload: HabitLogCreate, db:
         "combo_multiplier": round(combo_multiplier, 2),
         "boss_hp": boss_hp,
         "boss_max_hp": boss_max_hp,
+        "coins_gained": coins_gained,
         "new_achievements": [
             {"key": a.key, "name": a.name, "icon": a.icon, "rarity": a.rarity}
             for a in newly_unlocked

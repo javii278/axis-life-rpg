@@ -134,6 +134,14 @@ export const api = {
     claim: () => req("/events/claim", { method: "POST" }),
   },
 
+  // ── Shop ────────────────────────────────────────────────────────────────────
+  shop: {
+    list: () => req("/shop/"),
+    buy: (key: string) => req(`/shop/${key}/buy`, { method: "POST" }),
+    equip: (key: string) => req(`/shop/${key}/equip`, { method: "POST" }),
+    unequip: (key: string) => req(`/shop/${key}/unequip`, { method: "POST" }),
+  },
+
   // ── Goals ───────────────────────────────────────────────────────────────────
   goals: {
     list: () => req("/goals/"),

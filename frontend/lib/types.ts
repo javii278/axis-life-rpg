@@ -25,6 +25,26 @@ export interface Character {
   streak_shields: number;
   login_streak: number;
   class_locked: boolean;
+  coins: number;
+  equipped_title: string | null;
+  equipped_aura: string | null;
+  equipped_border: string | null;
+}
+
+export type CosmeticRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
+export type CosmeticCategory = "title" | "aura" | "border";
+
+export interface CosmeticItem {
+  key: string;
+  name: string;
+  category: CosmeticCategory;
+  value: string;
+  price: number;
+  description: string;
+  rarity: CosmeticRarity;
+  emoji: string;
+  owned: boolean;
+  equipped: boolean;
 }
 
 export interface ChestReward {

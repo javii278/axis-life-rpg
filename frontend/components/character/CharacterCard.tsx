@@ -4,6 +4,13 @@ import { Character, CLASS_META, STAT_META, StatType } from "@/lib/types";
 import { StatBar } from "@/components/ui/StatBar";
 import { XpBar } from "@/components/ui/XpBar";
 
+const BORDER_STYLES: Record<string, { border: string; shadow: string }> = {
+  neon:    { border: "#a78bfa", shadow: "0 0 16px #7c3aed35" },
+  gold:    { border: "#f59e0b", shadow: "0 0 16px #f59e0b35" },
+  crystal: { border: "#06b6d4", shadow: "0 0 16px #06b6d435" },
+  royal:   { border: "#7c3aed", shadow: "0 0 24px #7c3aed55" },
+};
+
 const STATS: StatType[] = ["VIT", "FOC", "SAB", "DIS", "CRE", "VOL"];
 
 const CLASS_COLORS: Record<string, string> = {
@@ -42,14 +49,19 @@ interface Props {
 export function CharacterCard({ character }: Props) {
   const classMeta = CLASS_META[character.character_class];
   const classColor = CLASS_COLORS[character.character_class] ?? "#7c3aed";
-  const title = getStatTitle(character);
+  const statTitle = getStatTitle(character);
+  const displayTitle = character.equipped_title ?? statTitle;
+  const borderStyle = character.equipped_border ? BORDER_STYLES[character.equipped_border] : null;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative bg-bg-card border rounded-2xl p-5 scanline overflow-hidden"
-      style={{ borderColor: `${classColor}30` }}
+      style={{
+        borderColor: borderStyle ? borderStyle.border : `${classColor}30`,
+        boxShadow: borderStyle ? borderStyle.shadow : undefined,
+      }}
     >
       {/* Glow dinámico por clase */}
       <div
@@ -67,16 +79,22 @@ export function CharacterCard({ character }: Props) {
           <p className="text-xs font-mono font-semibold" style={{ color: classColor }}>
             {character.character_class}
           </p>
-          {title && (
+          {displayTitle && (
             <p className="text-[10px] font-mono mt-0.5" style={{ color: `${classColor}cc` }}>
-              ✦ {title}
+              ✦ {displayTitle}
             </p>
           )}
           <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{classMeta.description}</p>
         </div>
-        <div className="text-right flex-shrink-0">
+        <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
           <div className="text-2xl font-display font-bold" style={{ color: classColor }}>{character.level}</div>
           <div className="text-[10px] text-gray-500 font-mono">NIVEL</div>
+          {character.coins > 0 && (
+            <div className="flex items-center gap-1 bg-amber-900/20 border border-amber-800/30 rounded-lg px-1.5 py-0.5">
+              <span className="text-[10px]">🪙</span>
+              <span className="text-[10px] font-mono font-bold text-amber-400">{character.coins}</span>
+            </div>
+          )}
         </div>
       </div>
 

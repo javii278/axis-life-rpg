@@ -79,6 +79,12 @@ class Character(Base):
     boss_max_hp: Mapped[int] = mapped_column(Integer, default=40)
     boss_reward_claimed: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Monedas y cosméticos
+    coins: Mapped[int] = mapped_column(Integer, default=0)
+    equipped_title: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    equipped_aura: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    equipped_border: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user: Mapped["User"] = relationship(back_populates="character")
@@ -182,6 +188,33 @@ class UserAchievement(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     achievement_key: Mapped[str] = mapped_column(String(100))
     unlocked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    user: Mapped["User"] = relationship()
+
+
+class CosmeticItem(Base):
+    """Catálogo global de cosméticos de la tienda."""
+    __tablename__ = "cosmetic_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    key: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(100))
+    category: Mapped[str] = mapped_column(String(20))   # "title" | "aura" | "border"
+    value: Mapped[str] = mapped_column(String(100))      # texto, color hex o key de estilo
+    price: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(String(200))
+    rarity: Mapped[str] = mapped_column(String(20))     # common | uncommon | rare | epic | legendary
+    emoji: Mapped[str] = mapped_column(String(10))
+
+
+class UserCosmetic(Base):
+    """Cosméticos comprados por cada usuario."""
+    __tablename__ = "user_cosmetics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    cosmetic_key: Mapped[str] = mapped_column(String(100))
+    purchased_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship()
 

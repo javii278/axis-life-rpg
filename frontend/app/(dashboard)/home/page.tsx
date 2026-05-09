@@ -360,7 +360,7 @@ export default function Dashboard() {
           >
             <div className="absolute inset-0 opacity-5 pointer-events-none"
               style={{ background: "radial-gradient(ellipse at 0% 50%, #7c3aed, transparent 70%)" }} />
-            <CharacterSprite characterClass={character.character_class} level={character.level} size={52} />
+            <CharacterSprite characterClass={character.character_class} level={character.level} size={52} auraColor={character.equipped_aura} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="font-display font-bold text-white text-sm truncate">{character.name}</span>
@@ -395,7 +395,7 @@ export default function Dashboard() {
                 <div className="absolute inset-0 opacity-8 pointer-events-none"
                   style={{ background: "radial-gradient(ellipse at 50% 0%, #7c3aed40, transparent 70%)" }} />
                 <div className="float">
-                  <CharacterSprite characterClass={character.character_class} level={character.level} size={140} />
+                  <CharacterSprite characterClass={character.character_class} level={character.level} size={140} auraColor={character.equipped_aura} />
                 </div>
                 <div className="text-center">
                   <div className="text-white font-display font-bold text-lg">{character.name}</div>

@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -27,6 +28,10 @@ class CharacterOut(BaseModel):
     streak_shields: int = 1
     login_streak: int = 0
     class_locked: bool = False
+    coins: int = 0
+    equipped_title: Optional[str] = None
+    equipped_aura: Optional[str] = None
+    equipped_border: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -151,13 +156,15 @@ def claim_boss_reward(db: Session = Depends(get_db), current_user: User = Depend
         raise HTTPException(status_code=409, detail="Recompensa ya reclamada esta semana")
 
     bonus_xp = 200
+    bonus_coins = 20
     character.total_xp += bonus_xp
+    character.coins = (character.coins or 0) + bonus_coins
     character.streak_shields = min((character.streak_shields or 0) + 1, 3)
     character.boss_reward_claimed = True
     db.commit()
     recalculate_character(current_user.id, db)
 
-    return {"ok": True, "xp_gained": bonus_xp, "shield_granted": True}
+    return {"ok": True, "xp_gained": bonus_xp, "coins_gained": bonus_coins, "shield_granted": True}
 
 
 def _to_out(character: Character) -> CharacterOut:
@@ -178,4 +185,8 @@ def _to_out(character: Character) -> CharacterOut:
         streak_shields=character.streak_shields,
         login_streak=character.login_streak,
         class_locked=character.class_locked,
+        coins=character.coins or 0,
+        equipped_title=character.equipped_title,
+        equipped_aura=character.equipped_aura,
+        equipped_border=character.equipped_border,
     )

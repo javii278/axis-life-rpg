@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Repeat2, Timer, Target, Sword,
-  CalendarCheck, ScrollText, MessageCircle, Trophy, LogOut, BarChart2, Settings
+  CalendarCheck, ScrollText, MessageCircle, Trophy, LogOut, BarChart2, Settings, ShoppingBag
 } from "lucide-react";
 import { isAuthenticated, clearAuth, getStoredUser } from "@/lib/auth";
 import { BottomNav } from "@/components/ui/BottomNav";
@@ -17,6 +17,7 @@ const NAV = [
   { href: "/quests",       label: "Misiones",  icon: ScrollText },
   { href: "/character",    label: "Personaje", icon: Sword },
   { href: "/achievements", label: "Logros",    icon: Trophy },
+  { href: "/shop",         label: "Tienda",    icon: ShoppingBag },
   { href: "/analytics",   label: "Analytics", icon: BarChart2 },
   { href: "/review",      label: "Review",    icon: CalendarCheck },
   { href: "/coach",        label: "Consejero", icon: MessageCircle },

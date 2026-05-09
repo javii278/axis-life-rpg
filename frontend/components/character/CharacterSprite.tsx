@@ -131,14 +131,31 @@ function getLevelTier(level: number) {
 interface Props {
   characterClass: CharacterClass;
   level: number;
-  size?: number; // display height in px
+  size?: number;
+  auraColor?: string | null; // override glow: hex color o "rainbow"
 }
 
-export function CharacterSprite({ characterClass, level, size = 160 }: Props) {
+export function CharacterSprite({ characterClass, level, size = 160, auraColor }: Props) {
   const pal = PALETTES[characterClass];
-  const glowColor = CLASS_GLOW[characterClass];
-  const filterId = `glow-${characterClass}`;
+  const baseGlow = CLASS_GLOW[characterClass];
+  const isRainbow = auraColor === "rainbow";
+  const glowColor = (!auraColor || isRainbow) ? baseGlow : auraColor;
+  const filterId = `glow-${characterClass}-${auraColor ?? "default"}`;
   const tier = getLevelTier(level);
+
+  const svgContent = (
+    <svg
+      viewBox={VB}
+      style={{ height: size, imageRendering: "pixelated" }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <GlowFilter id={filterId} color={glowColor} level={level} />
+      <g filter={`url(#${filterId})`}>
+        <ClassOverlay cls={characterClass} pal={pal} />
+        <BaseBody pal={pal} />
+      </g>
+    </svg>
+  );
 
   return (
     <motion.div
@@ -149,32 +166,25 @@ export function CharacterSprite({ characterClass, level, size = 160 }: Props) {
       {tier && (
         <div
           style={{
-            position: "absolute",
-            top: 0,
-            left: "50%",
+            position: "absolute", top: 0, left: "50%",
             transform: "translateX(-50%)",
-            fontSize: Math.round(size * 0.14),
-            lineHeight: 1,
-            filter: `drop-shadow(${tier.shadow})`,
-            zIndex: 1,
-            pointerEvents: "none",
+            fontSize: Math.round(size * 0.14), lineHeight: 1,
+            filter: `drop-shadow(${tier.shadow})`, zIndex: 1, pointerEvents: "none",
           }}
           aria-hidden="true"
         >
           {tier.emoji}
         </div>
       )}
-      <svg
-        viewBox={VB}
-        style={{ height: size, imageRendering: "pixelated" }}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <GlowFilter id={filterId} color={glowColor} level={level} />
-        <g filter={`url(#${filterId})`}>
-          <ClassOverlay cls={characterClass} pal={pal} />
-          <BaseBody pal={pal} />
-        </g>
-      </svg>
+
+      {isRainbow ? (
+        <motion.div
+          animate={{ filter: ["hue-rotate(0deg)", "hue-rotate(360deg)"] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+        >
+          {svgContent}
+        </motion.div>
+      ) : svgContent}
     </motion.div>
   );
 }
