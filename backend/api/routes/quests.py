@@ -1,3 +1,4 @@
+import hashlib
 from datetime import date
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -14,6 +15,34 @@ router = APIRouter(prefix="/quests", tags=["quests"])
 
 TYPE_XP = {QuestType.MAIN: 100, QuestType.WEEKLY: 50, QuestType.DAILY: 20}
 GOAL_LEVEL_TO_TYPE = {0: QuestType.MAIN, 1: QuestType.MAIN, 2: QuestType.WEEKLY, 3: QuestType.DAILY}
+
+_DAILY_TEMPLATES = [
+    {"title": "🌅 Guerrero del amanecer", "description": "Completa tu primer hábito antes de las 10am y arranca el día con energía"},
+    {"title": "🔥 Triple amenaza", "description": "Completa 3 hábitos diferentes hoy sin excusas"},
+    {"title": "⚡ Sin aplazar", "description": "Completa todos tus hábitos antes de las 8pm"},
+    {"title": "🎯 Foco absoluto", "description": "Completa todos tus hábitos de FOC y demuestra que puedes con la mente"},
+    {"title": "💪 Cuerpo en acción", "description": "Completa todos tus hábitos de VIT — el cuerpo es tu primera herramienta"},
+    {"title": "📚 Sed de saber", "description": "Completa todos tus hábitos de SAB hoy y alimenta tu mente"},
+    {"title": "🏆 Sin excusas", "description": "Completa al menos 4 hábitos hoy — sin negociaciones contigo mismo"},
+    {"title": "🌟 Perfección posible", "description": "Intenta completar el 100% de tus hábitos del día"},
+    {"title": "🔱 La trinidad", "description": "Toca 3 stats distintos hoy — sé el personaje más equilibrado"},
+    {"title": "🛡️ Defensa activa", "description": "No dejes ningún hábito pendiente para después de las 9pm"},
+    {"title": "⏰ El tiempo es oro", "description": "Completa la mitad de tus hábitos antes del mediodía"},
+    {"title": "🌊 Flujo imparable", "description": "Completa 3 hábitos seguidos sin revisar el teléfono entre medio"},
+    {"title": "🧘 Mente de acero", "description": "Completa tus hábitos de VOL — haz lo difícil primero"},
+    {"title": "✨ Racha viva", "description": "Mantén activa la racha en al menos 2 hábitos diarios hoy"},
+    {"title": "🚀 Despegue", "description": "Empieza fuerte: 2 hábitos completados antes de las 9am"},
+    {"title": "🎭 Maestro del equilibrio", "description": "Completa al menos un hábito de cada stat que tengas activo"},
+    {"title": "🌈 Día arcoíris", "description": "Completa hábitos de 4 stats distintos — sé el personaje más completo hoy"},
+    {"title": "💎 Diamante en bruto", "description": "Hoy es el día de demostrar que eres constante — completa el 80%+"},
+    {"title": "🎖️ Primero lo difícil", "description": "Empieza por el hábito que menos ganas tienes de hacer — y después todo rueda"},
+    {"title": "🔬 Laboratorio personal", "description": "Completa 2 hábitos de CRE hoy — experimenta y crea algo nuevo"},
+    {"title": "🏃 Momentum", "description": "Cada hábito completado hoy te acerca al siguiente nivel — ¡a por todos!"},
+    {"title": "🌙 Cierre perfecto", "description": "Antes de dormir, que todos los hábitos del día estén marcados"},
+    {"title": "⚔️ Conquista del día", "description": "Completa más hábitos que ayer — supérate a ti mismo"},
+    {"title": "🗡️ Sin cuartel", "description": "Completa todos tus hábitos aunque el día haya ido mal — la disciplina es constante"},
+    {"title": "🔥 Combo maestro", "description": "Completa 3 hábitos seguidos para activar el multiplicador de XP máximo"},
+]
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -123,6 +152,41 @@ def complete_quest(request: Request, quest_id: int, db: Session = Depends(get_db
             for a in newly_unlocked
         ],
     }
+
+
+@router.get("/daily-quest", response_model=QuestOut)
+def get_daily_quest(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Devuelve (o crea) la misión especial del día. Se rota cada día de forma determinista."""
+    today = date.today()
+
+    existing = (
+        db.query(Quest)
+        .filter(
+            Quest.user_id == current_user.id,
+            Quest.quest_type == QuestType.DAILY,
+            Quest.due_date == today,
+            Quest.is_active == True,
+        )
+        .first()
+    )
+    if existing:
+        return _to_out(existing)
+
+    day_hash = int(hashlib.md5(today.isoformat().encode()).hexdigest(), 16)
+    template = _DAILY_TEMPLATES[day_hash % len(_DAILY_TEMPLATES)]
+
+    quest = Quest(
+        user_id=current_user.id,
+        title=template["title"],
+        description=template["description"],
+        quest_type=QuestType.DAILY,
+        xp_reward=35,
+        due_date=today,
+    )
+    db.add(quest)
+    db.commit()
+    db.refresh(quest)
+    return _to_out(quest)
 
 
 @router.delete("/{quest_id}", status_code=204)

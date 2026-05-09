@@ -66,6 +66,15 @@ export interface DailyCheckin {
   shield_granted?: boolean;
 }
 
+export interface WeeklyBoss {
+  boss_week: string;
+  boss_hp: number;
+  boss_max_hp: number;
+  boss_reward_claimed: boolean;
+  defeated: boolean;
+  days_left: number;
+}
+
 export interface Habit {
   id: number;
   name: string;

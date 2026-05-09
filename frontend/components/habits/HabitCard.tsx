@@ -11,9 +11,10 @@ interface Props {
   habit: Habit;
   onUpdate: () => void;
   shields?: number;
+  onPerfectDay?: (xpBonus: number) => void;
 }
 
-export function HabitCard({ habit, onUpdate, shields = 0 }: Props) {
+export function HabitCard({ habit, onUpdate, shields = 0, onPerfectDay }: Props) {
   const [loading, setLoading] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null);
@@ -68,11 +69,13 @@ export function HabitCard({ habit, onUpdate, shields = 0 }: Props) {
         await api.habits.undoComplete(habit.id, today);
       } else {
         const result = await api.habits.complete(habit.id, { log_date: today }) as any;
+        const comboLabel = result.combo_count >= 2 ? ` · x${result.combo_multiplier} COMBO` : "";
+        const streakLabel = result.streak > 1 ? `🔥 Racha de ${result.streak} días${comboLabel}` : comboLabel ? comboLabel.slice(3) : undefined;
         showToast({
           type: "success",
-          title: `+${result.xp_gained} XP`,
-          message: result.streak > 1 ? `🔥 Racha de ${result.streak} días` : undefined,
-          icon: "✅",
+          title: `+${result.xp_gained} XP${result.combo_count >= 1 ? ` (x${result.combo_multiplier})` : ""}`,
+          message: streakLabel,
+          icon: result.combo_count >= 2 ? "⚡" : "✅",
           duration: 2500,
         });
         result.new_achievements?.forEach((a: { name: string; icon: string; rarity: string }) =>
@@ -81,6 +84,9 @@ export function HabitCard({ habit, onUpdate, shields = 0 }: Props) {
         if (result.chest_reward) {
           setChestStreak(result.streak);
           setChestReward(result.chest_reward);
+        }
+        if (result.perfect_day && onPerfectDay) {
+          onPerfectDay(result.perfect_day_xp ?? 50);
         }
       }
       onUpdate();

@@ -65,6 +65,8 @@ export const api = {
     chooseClass: (character_class: string) =>
       req("/character/choose-class", { method: "POST", body: JSON.stringify({ character_class }) }),
     history: (days = 30) => req(`/character/history?days=${days}`),
+    weeklyBoss: () => req("/character/weekly-boss"),
+    claimBossReward: () => req("/character/weekly-boss/claim", { method: "POST" }),
   },
 
   // ── Habits ──────────────────────────────────────────────────────────────────
@@ -96,6 +98,7 @@ export const api = {
   // ── Quests ──────────────────────────────────────────────────────────────────
   quests: {
     list: (completed = false) => req(`/quests/?completed=${completed}`),
+    dailyQuest: () => req("/quests/daily-quest"),
     create: (data: { title: string; description?: string; quest_type?: string; xp_reward?: number; related_goal_id?: number; due_date?: string }) =>
       req("/quests/", { method: "POST", body: JSON.stringify(data) }),
     complete: (id: number) => req(`/quests/${id}/complete`, { method: "POST" }),

@@ -10,6 +10,8 @@ from backend.core.stats_engine import calculate_streak, recalculate_character
 from backend.core.auth import get_current_user
 from backend.core.limiter import limiter
 
+_COMBO_MULT = [1.0, 1.2, 1.5, 1.8, 2.0]
+
 router = APIRouter(prefix="/habits", tags=["habits"])
 
 
@@ -139,11 +141,28 @@ def complete_habit(request: Request, habit_id: int, payload: HabitLogCreate, db:
 
     from backend.models import Character
     character = db.query(Character).filter(Character.user_id == current_user.id).first()
+
+    # Combo multiplier: cuántos hábitos diarios se completaron antes de este
+    today = payload.log_date
+    done_today_count = (
+        db.query(HabitLog)
+        .join(Habit, Habit.id == HabitLog.habit_id)
+        .filter(
+            Habit.user_id == current_user.id,
+            Habit.is_active == True,
+            Habit.frequency == HabitFrequency.DAILY,
+            HabitLog.log_date == today,
+        )
+        .count()
+    )
+    combo_count = max(0, done_today_count - 1)  # este ya está contado (commit fue antes)
+    combo_multiplier = _COMBO_MULT[min(combo_count, len(_COMBO_MULT) - 1)]
+
     xp_gained = 0
     if character:
         from backend.core.stats_engine import streak_multiplier
         streak = calculate_streak(habit, db)
-        xp_gained = int(habit.xp_reward * streak_multiplier(streak))
+        xp_gained = int(habit.xp_reward * streak_multiplier(streak) * combo_multiplier)
         character.total_xp += xp_gained
         db.commit()
     updated_character = recalculate_character(current_user.id, db)
@@ -152,6 +171,37 @@ def complete_habit(request: Request, habit_id: int, payload: HabitLogCreate, db:
     newly_unlocked = check_achievements(current_user.id, db)
 
     streak = calculate_streak(habit, db)
+
+    # Perfect Day: ¿todos los hábitos diarios completados?
+    total_daily = (
+        db.query(Habit)
+        .filter(Habit.user_id == current_user.id, Habit.is_active == True, Habit.frequency == HabitFrequency.DAILY)
+        .count()
+    )
+    perfect_day = (total_daily > 0 and done_today_count >= total_daily)
+    perfect_day_xp = 0
+    if perfect_day and character:
+        perfect_day_xp = 50
+        character.total_xp += perfect_day_xp
+        xp_gained += perfect_day_xp
+        db.commit()
+
+    # Jefe semanal: recibir daño
+    boss_hp = None
+    boss_max_hp = None
+    if character:
+        import datetime as _dt
+        iso_year, iso_week, _ = _dt.date.today().isocalendar()
+        current_boss_week = f"{iso_year}-W{iso_week:02d}"
+        if character.boss_week != current_boss_week:
+            character.boss_week = current_boss_week
+            character.boss_hp = character.boss_max_hp
+            character.boss_reward_claimed = False
+        if character.boss_hp > 0:
+            character.boss_hp = max(0, character.boss_hp - 1)
+        boss_hp = character.boss_hp
+        boss_max_hp = character.boss_max_hp
+        db.commit()
 
     # Cofre aleatorio cada múltiplo de 7 en la racha
     chest_reward = None
@@ -178,6 +228,12 @@ def complete_habit(request: Request, habit_id: int, payload: HabitLogCreate, db:
         "streak": streak,
         "character_level": updated_character.level if updated_character else 1,
         "chest_reward": chest_reward,
+        "perfect_day": perfect_day,
+        "perfect_day_xp": perfect_day_xp,
+        "combo_count": combo_count,
+        "combo_multiplier": round(combo_multiplier, 2),
+        "boss_hp": boss_hp,
+        "boss_max_hp": boss_max_hp,
         "new_achievements": [
             {"key": a.key, "name": a.name, "icon": a.icon, "rarity": a.rarity}
             for a in newly_unlocked

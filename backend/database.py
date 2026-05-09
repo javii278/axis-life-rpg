@@ -56,11 +56,15 @@ def _run_safe_migrations():
         ("email",         "VARCHAR(200)"),
     ]
     migrations_characters = [
-        ("streak_shields",    "INTEGER NOT NULL DEFAULT 1"),
-        ("last_shield_grant", "DATE"),
-        ("login_streak",      "INTEGER NOT NULL DEFAULT 0"),
-        ("last_login_date",   "DATE"),
-        ("class_locked",      "BOOLEAN NOT NULL DEFAULT FALSE"),
+        ("streak_shields",     "INTEGER NOT NULL DEFAULT 1"),
+        ("last_shield_grant",  "DATE"),
+        ("login_streak",       "INTEGER NOT NULL DEFAULT 0"),
+        ("last_login_date",    "DATE"),
+        ("class_locked",       "BOOLEAN NOT NULL DEFAULT FALSE"),
+        ("boss_week",          "VARCHAR(10)"),
+        ("boss_hp",            "INTEGER NOT NULL DEFAULT 40"),
+        ("boss_max_hp",        "INTEGER NOT NULL DEFAULT 40"),
+        ("boss_reward_claimed","BOOLEAN NOT NULL DEFAULT FALSE"),
     ]
 
     with engine.connect() as conn:

@@ -2,7 +2,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Character, Habit, FocusSession, Quest } from "@/lib/types";
 import { api } from "@/lib/api";
 import { CharacterCard } from "@/components/character/CharacterCard";
 import { CharacterSprite } from "@/components/character/CharacterSprite";
@@ -11,7 +10,7 @@ import { HabitCard } from "@/components/habits/HabitCard";
 import { FocusTimer } from "@/components/focus/FocusTimer";
 import { QuestCard } from "@/components/quests/QuestCard";
 import { CreateHabitModal } from "@/components/habits/CreateHabitModal";
-import { Plus, ScrollText, Sparkles } from "lucide-react";
+import { Plus, ScrollText, Sparkles, Star, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { NotificationBell } from "@/components/ui/NotificationBell";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -19,11 +18,68 @@ import { LoginBonusModal } from "@/components/ui/LoginBonusModal";
 import { LeaderboardCard } from "@/components/ui/LeaderboardCard";
 import { EventBanner } from "@/components/ui/EventBanner";
 import { ClassSelectionModal } from "@/components/character/ClassSelectionModal";
-import { DailyCheckin, LeaderboardEntry, SeasonalEvent } from "@/lib/types";
+import { WeeklyBossCard } from "@/components/ui/WeeklyBossCard";
+import { PerfectDayModal } from "@/components/ui/PerfectDayModal";
+import { Character, Habit, FocusSession, DailyCheckin, LeaderboardEntry, SeasonalEvent, WeeklyBoss, Quest } from "@/lib/types";
 
 const LEVEL_KEY = "axis_last_level";
 const ONBOARDING_KEY = "axis_onboarded";
 const CHECKIN_KEY = "axis_checkin_date";
+
+function DailyQuestBanner({ quest, onUpdate }: { quest: Quest; onUpdate: () => void }) {
+  const [loading, setLoading] = useState(false);
+
+  async function complete() {
+    if (loading || quest.is_completed) return;
+    setLoading(true);
+    try {
+      await api.quests.complete(quest.id);
+      onUpdate();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all ${
+        quest.is_completed
+          ? "border-green-800/40 bg-green-900/10 opacity-70"
+          : "border-amber-800/40 bg-amber-900/10 cursor-pointer hover:border-amber-600/60"
+      }`}
+      onClick={!quest.is_completed ? complete : undefined}
+    >
+      <motion.div
+        className="text-xl flex-shrink-0"
+        animate={quest.is_completed ? {} : { rotate: [0, -5, 5, 0] }}
+        transition={{ repeat: Infinity, duration: 4, repeatDelay: 3 }}
+      >
+        {quest.is_completed ? "✅" : "⚔️"}
+      </motion.div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <Star size={9} className="text-amber-400 flex-shrink-0" fill="currentColor" />
+          <span className="text-[9px] font-mono text-amber-600 uppercase tracking-widest">Misión del día</span>
+        </div>
+        <p className={`text-sm font-medium leading-tight ${quest.is_completed ? "line-through text-gray-500" : "text-white"}`}>
+          {quest.title}
+        </p>
+        {quest.description && (
+          <p className="text-[11px] text-gray-500 truncate mt-0.5">{quest.description}</p>
+        )}
+      </div>
+      <div className="flex-shrink-0 flex items-center gap-1">
+        {quest.is_completed ? (
+          <CheckCircle2 size={16} className="text-green-500" />
+        ) : (
+          <span className="text-[10px] font-mono text-amber-500 font-bold">+{quest.xp_reward} XP</span>
+        )}
+      </div>
+    </motion.div>
+  );
+}
 
 // Barra de progreso diario — gancho psicológico principal
 function DailyProgressBar({ done, total }: { done: number; total: number }) {
@@ -146,6 +202,10 @@ export default function Dashboard() {
   const [activeEvent, setActiveEvent] = useState<SeasonalEvent | null>(null);
   const [classModalOpen, setClassModalOpen] = useState(false);
   const [fetchError, setFetchError] = useState(false);
+  const [weeklyBoss, setWeeklyBoss] = useState<WeeklyBoss | null>(null);
+  const [dailyQuest, setDailyQuest] = useState<Quest | null>(null);
+  const [perfectDayOpen, setPerfectDayOpen] = useState(false);
+  const [perfectDayXp, setPerfectDayXp] = useState(50);
   const { scheduleStreakDanger } = useNotifications();
 
   const fetchAll = useCallback(async () => {
@@ -205,6 +265,16 @@ export default function Dashboard() {
   // Evento semanal activo
   useEffect(() => {
     api.events.active().then((data: any) => setActiveEvent(data as SeasonalEvent)).catch(() => {});
+  }, []);
+
+  // Jefe semanal
+  useEffect(() => {
+    api.character.weeklyBoss().then((data: any) => setWeeklyBoss(data as WeeklyBoss)).catch(() => {});
+  }, []);
+
+  // Misión diaria
+  useEffect(() => {
+    api.quests.dailyQuest().then((data: any) => setDailyQuest(data as Quest)).catch(() => {});
   }, []);
 
   // Árbol de clases: muestra modal si nivel >= 10 y clase no bloqueada
@@ -364,9 +434,19 @@ export default function Dashboard() {
               </motion.div>
             )}
 
+            {/* Jefe semanal — desktop sidebar */}
+            {weeklyBoss && (
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
+                <WeeklyBossCard
+                  boss={weeklyBoss}
+                  onClaimed={() => api.character.weeklyBoss().then((d: any) => setWeeklyBoss(d)).catch(() => {})}
+                />
+              </motion.div>
+            )}
+
             {/* Leaderboard semanal — desktop sidebar */}
             {leaderboard.length > 0 && (
-              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
+              <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
                 <LeaderboardCard entries={leaderboard} />
               </motion.div>
             )}
@@ -381,9 +461,34 @@ export default function Dashboard() {
               </motion.div>
             )}
 
+            {/* Misión del día */}
+            {dailyQuest && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+                <DailyQuestBanner quest={dailyQuest} onUpdate={() => {
+                  api.quests.dailyQuest().then((d: any) => setDailyQuest(d)).catch(() => {});
+                  fetchAll();
+                }} />
+              </motion.div>
+            )}
+
+            {/* Jefe semanal — solo en móvil */}
+            {weeklyBoss && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 }}
+                className="lg:hidden"
+              >
+                <WeeklyBossCard
+                  boss={weeklyBoss}
+                  onClaimed={() => api.character.weeklyBoss().then((d: any) => setWeeklyBoss(d)).catch(() => {})}
+                />
+              </motion.div>
+            )}
+
             {/* Evento semanal */}
             {activeEvent && (
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
                 <EventBanner event={activeEvent} onClaimed={fetchAll} />
               </motion.div>
             )}
@@ -436,7 +541,15 @@ export default function Dashboard() {
                       )}
                     </motion.div>
                   ) : (
-                    todayHabits.map(h => <HabitCard key={h.id} habit={h} onUpdate={fetchAll} shields={character?.streak_shields ?? 0} />)
+                    todayHabits.map(h => (
+                      <HabitCard
+                        key={h.id}
+                        habit={h}
+                        onUpdate={fetchAll}
+                        shields={character?.streak_shields ?? 0}
+                        onPerfectDay={(xp) => { setPerfectDayXp(xp); setPerfectDayOpen(true); }}
+                      />
+                    ))
                   )}
                 </div>
               </AnimatePresence>
@@ -514,6 +627,12 @@ export default function Dashboard() {
           }}
         />
       )}
+
+      <PerfectDayModal
+        open={perfectDayOpen}
+        xpBonus={perfectDayXp}
+        onDismiss={() => setPerfectDayOpen(false)}
+      />
     </>
   );
 }

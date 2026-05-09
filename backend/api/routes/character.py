@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -106,6 +107,57 @@ def choose_class(payload: ChooseClassPayload, db: Session = Depends(get_db), cur
     db.commit()
     db.refresh(character)
     return _to_out(character)
+
+
+def _current_boss_week() -> str:
+    iso_year, iso_week, _ = date.today().isocalendar()
+    return f"{iso_year}-W{iso_week:02d}"
+
+
+@router.get("/weekly-boss")
+def get_weekly_boss(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    character = db.query(Character).filter(Character.user_id == current_user.id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
+
+    current_week = _current_boss_week()
+    if character.boss_week != current_week:
+        character.boss_week = current_week
+        character.boss_hp = character.boss_max_hp
+        character.boss_reward_claimed = False
+        db.commit()
+
+    days_left = 7 - date.today().isocalendar()[2]  # isoweekday: 1=Mon, 7=Sun
+    return {
+        "boss_week": character.boss_week,
+        "boss_hp": character.boss_hp,
+        "boss_max_hp": character.boss_max_hp,
+        "boss_reward_claimed": character.boss_reward_claimed,
+        "defeated": character.boss_hp == 0,
+        "days_left": days_left,
+    }
+
+
+@router.post("/weekly-boss/claim")
+def claim_boss_reward(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    character = db.query(Character).filter(Character.user_id == current_user.id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="Character not found")
+    if character.boss_week != _current_boss_week():
+        raise HTTPException(status_code=400, detail="El jefe de esta semana aún no está activo")
+    if character.boss_hp != 0:
+        raise HTTPException(status_code=400, detail="El jefe semanal no está derrotado aún")
+    if character.boss_reward_claimed:
+        raise HTTPException(status_code=409, detail="Recompensa ya reclamada esta semana")
+
+    bonus_xp = 200
+    character.total_xp += bonus_xp
+    character.streak_shields = min((character.streak_shields or 0) + 1, 3)
+    character.boss_reward_claimed = True
+    db.commit()
+    recalculate_character(current_user.id, db)
+
+    return {"ok": True, "xp_gained": bonus_xp, "shield_granted": True}
 
 
 def _to_out(character: Character) -> CharacterOut:

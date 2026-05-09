@@ -73,6 +73,12 @@ class Character(Base):
     last_login_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     class_locked: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Jefe semanal
+    boss_week: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    boss_hp: Mapped[int] = mapped_column(Integer, default=40)
+    boss_max_hp: Mapped[int] = mapped_column(Integer, default=40)
+    boss_reward_claimed: Mapped[bool] = mapped_column(Boolean, default=False)
+
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user: Mapped["User"] = relationship(back_populates="character")
