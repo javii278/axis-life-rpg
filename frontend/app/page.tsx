@@ -210,6 +210,15 @@ export default function LandingPage() {
         <span className="text-gray-600 text-sm font-mono">
           AXIS<span className="text-accent-purple_light">.</span> — The Life RPG
         </span>
+        <div className="mt-3 flex items-center justify-center gap-4 text-xs text-gray-600">
+          <Link href="/privacy" className="hover:text-gray-400 transition-colors">
+            Política de Privacidad
+          </Link>
+          <span>·</span>
+          <a href="mailto:javii278278@gmail.com" className="hover:text-gray-400 transition-colors">
+            Contacto
+          </a>
+        </div>
       </footer>
     </div>
   );
