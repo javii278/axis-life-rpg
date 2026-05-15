@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "tech.axisrpg.twa",
+        "sha256_cert_fingerprints": ["18:17:13:B1:4B:B1:47:A1:C5:CA:76:37:7D:59:6B:1D:96:69:84:C2:C6:E8:B0:DB:B2:39:E5:D0:EB:55:5B:42"]
+      }
+    }]

@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { HabitCard } from "@/components/habits/HabitCard";
 import { CreateHabitModal } from "@/components/habits/CreateHabitModal";
 import { Plus } from "lucide-react";
+import { AdBanner } from "@/components/ui/AdBanner";
 
 const STATS = ["ALL", ...Object.keys(STAT_META)] as const;
 
@@ -95,6 +96,13 @@ export default function HabitsPage() {
         <div className="space-y-2">
           {filtered.map(h => <HabitCard key={h.id} habit={h} onUpdate={fetchHabits} />)}
         </div>
+      )}
+
+      {filtered.length >= 3 && (
+        <AdBanner
+          slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HABITS ?? ""}
+          className="rounded-xl mt-2"
+        />
       )}
 
       <CreateHabitModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={fetchHabits} />

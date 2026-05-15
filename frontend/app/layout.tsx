@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 
@@ -32,6 +33,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" className="dark">
       <body className="antialiased">
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5145705039498306"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

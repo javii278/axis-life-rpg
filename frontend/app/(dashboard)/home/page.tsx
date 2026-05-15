@@ -13,6 +13,7 @@ import { CreateHabitModal } from "@/components/habits/CreateHabitModal";
 import { Plus, ScrollText, Sparkles, Star, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { NotificationBell } from "@/components/ui/NotificationBell";
+import { AdBanner } from "@/components/ui/AdBanner";
 import { useNotifications } from "@/hooks/useNotifications";
 import { LoginBonusModal } from "@/components/ui/LoginBonusModal";
 import { LeaderboardCard } from "@/components/ui/LeaderboardCard";
@@ -496,6 +497,11 @@ export default function Dashboard() {
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
               <FocusTimer activeSession={activeSession} onUpdate={fetchAll} />
             </motion.div>
+
+            <AdBanner
+              slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_DASHBOARD ?? ""}
+              className="rounded-xl"
+            />
 
             {/* Hábitos pendientes */}
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
