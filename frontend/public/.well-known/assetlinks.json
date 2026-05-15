@@ -3,6 +3,6 @@
   "target": {
     "namespace": "android_app",
     "package_name": "tech.axisrpg.twa",
-    "sha256_cert_fingerprints": ["18:17:13:B1:4B:B1:47:A1:C5:CA:76:37:7D:59:6B:1D:96:69:84:C2:C6:E8:B0:DB:B2:39:E5:D0:EB:55:5B:42"]
+    "sha256_cert_fingerprints": ["BC:88:E9:71:90:E1:1C:11:B2:03:72:84:57:76:08:2C:37:8D:0B:50:85:7D:81:52:A5:70:3F:B2:3C:42:5F:AF"]
   }
 }]
