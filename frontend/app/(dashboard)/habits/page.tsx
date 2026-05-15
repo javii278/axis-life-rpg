@@ -23,6 +23,12 @@ export default function HabitsPage() {
 
   useEffect(() => { fetchHabits(); }, [fetchHabits]);
 
+  useEffect(() => {
+    const onRefresh = () => fetchHabits();
+    window.addEventListener('axis:refresh', onRefresh);
+    return () => window.removeEventListener('axis:refresh', onRefresh);
+  }, [fetchHabits]);
+
   const filtered = filter === "ALL" ? habits : habits.filter(h => h.stat_target === filter);
 
   return (

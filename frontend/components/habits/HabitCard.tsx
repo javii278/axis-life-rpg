@@ -64,6 +64,7 @@ export function HabitCard({ habit, onUpdate, shields = 0, onPerfectDay }: Props)
       setOptimisticDone(false);
       if ('vibrate' in navigator) navigator.vibrate(20);
     }
+    window.dispatchEvent(new CustomEvent('axis:refresh'));
 
     try {
       if (habit.completed_today) {
@@ -107,11 +108,11 @@ export function HabitCard({ habit, onUpdate, shields = 0, onPerfectDay }: Props)
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      whileTap={{ scale: 0.98 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      whileTap={{ scale: 0.985 }}
       className={`
         relative flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-300 group overflow-hidden
         ${done

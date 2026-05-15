@@ -245,11 +245,18 @@ export default function Dashboard() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Refresca datos cuando el usuario vuelve a la app desde segundo plano
+  // Refresca cuando el usuario vuelve desde segundo plano
   useEffect(() => {
     const onVisible = () => { if (document.visibilityState === 'visible') fetchAll(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [fetchAll]);
+
+  // Refresca cuando cualquier página hace una mutación (hábito completado, quest, etc.)
+  useEffect(() => {
+    const onRefresh = () => fetchAll();
+    window.addEventListener('axis:refresh', onRefresh);
+    return () => window.removeEventListener('axis:refresh', onRefresh);
   }, [fetchAll]);
 
   // Daily checkin — solo se llama si no se hizo hoy (evita side-effects repetidos)
