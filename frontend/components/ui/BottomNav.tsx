@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Repeat2, Timer, BarChart2, Sword } from "lucide-react";
+import { LayoutDashboard, Repeat2, ShoppingBag, Trophy, BookOpen } from "lucide-react";
 
 const TABS = [
-  { href: "/home",      label: "Inicio",   icon: LayoutDashboard },
-  { href: "/habits",    label: "Hábitos",  icon: Repeat2 },
-  { href: "/focus",     label: "Foco",     icon: Timer },
-  { href: "/analytics", label: "Stats",    icon: BarChart2 },
-  { href: "/character", label: "Personaje",icon: Sword },
+  { href: "/home",         label: "Inicio",  icon: LayoutDashboard },
+  { href: "/habits",       label: "Hábitos", icon: Repeat2 },
+  { href: "/shop",         label: "Tienda",  icon: ShoppingBag },
+  { href: "/achievements", label: "Logros",  icon: Trophy },
+  { href: "/review",       label: "Review",  icon: BookOpen },
 ];
 
 export function BottomNav() {
