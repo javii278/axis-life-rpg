@@ -7,7 +7,7 @@ BACKEND_DIR="$REPO_DIR/backend"
 
 echo "==> [1/6] Actualizando código..."
 cd "$REPO_DIR"
-git checkout frontend/next-env.d.ts 2>/dev/null || true
+git checkout frontend/next-env.d.ts frontend/package-lock.json 2>/dev/null || true
 git pull
 
 echo "==> [2/6] Instalando dependencias frontend..."
