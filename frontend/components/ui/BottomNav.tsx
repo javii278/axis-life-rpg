@@ -22,14 +22,14 @@ export function BottomNav() {
           <Link
             key={href}
             href={href}
-            className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors min-h-[56px] ${
+            className={`flex-1 flex flex-col items-center justify-center py-1.5 gap-0.5 transition-colors min-h-[52px] min-w-0 ${
               active ? "text-accent-purple_light" : "text-gray-500"
             }`}
           >
-            <div className={`p-1.5 rounded-xl transition-colors ${active ? "bg-accent-purple/20" : ""}`}>
-              <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
+            <div className={`p-1 rounded-xl transition-colors ${active ? "bg-accent-purple/20" : ""}`}>
+              <Icon size={18} strokeWidth={active ? 2.5 : 1.5} />
             </div>
-            <span className="text-[10px] font-medium leading-none">{label}</span>
+            <span className="text-[9px] font-medium leading-none truncate w-full text-center px-0.5">{label}</span>
           </Link>
         );
       })}
