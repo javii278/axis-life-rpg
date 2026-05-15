@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Repeat2, ShoppingBag, Trophy, BookOpen } from "lucide-react";
+import { hapticLight } from "@/lib/haptics";
 
 const TABS = [
   { href: "/home",         label: "Inicio",  Icon: LayoutDashboard },
@@ -26,7 +27,8 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-2 min-h-[58px] relative"
+              onClick={() => hapticLight()}
+              className="flex-1 flex flex-col items-center justify-center gap-1 py-2 min-h-[58px] relative active:opacity-70 transition-opacity duration-75"
             >
               <div className="relative flex items-center justify-center">
                 {active && (

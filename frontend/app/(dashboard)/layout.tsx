@@ -39,8 +39,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login");
   }
 
-  // Devuelve null igual en servidor y cliente hasta que se monta → evita hydration mismatch
-  if (!mounted || !isAuthenticated()) return null;
+  if (!mounted) return (
+    <div className="min-h-screen min-h-dvh flex items-center justify-center bg-[#0a0a0f]">
+      <div className="text-center">
+        <p className="text-2xl font-bold text-white tracking-tight">AXIS<span className="text-purple-400">.</span></p>
+      </div>
+    </div>
+  );
+  if (!isAuthenticated()) return null;
 
   const user = getStoredUser();
 

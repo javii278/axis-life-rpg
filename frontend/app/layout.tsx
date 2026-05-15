@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { CapacitorInit } from "@/components/CapacitorInit";
 
 export const metadata: Metadata = {
   title: "Axis — The Life RPG",
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="antialiased">
+        <CapacitorInit />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

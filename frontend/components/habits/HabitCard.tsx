@@ -1,11 +1,12 @@
 "use client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { CheckCircle2, Circle, Flame, Trash2, Zap, Shield } from "lucide-react";
 import { Habit, STAT_META, ChestReward } from "@/lib/types";
 import { api } from "@/lib/api";
 import { useState } from "react";
 import { useToast } from "@/components/ui/ToastProvider";
 import { ChestModal } from "@/components/ui/ChestModal";
+import { hapticNotification, hapticLight } from "@/lib/haptics";
 
 interface Props {
   habit: Habit;
@@ -18,6 +19,8 @@ export function HabitCard({ habit, onUpdate, shields = 0, onPerfectDay }: Props)
   const [loading, setLoading] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
   const [optimisticDone, setOptimisticDone] = useState<boolean | null>(null);
+  const x = useMotionValue(0);
+  const swipeOpacity = useTransform(x, [0, 70], [0, 1]);
   const [shieldLoading, setShieldLoading] = useState(false);
   const [chestReward, setChestReward] = useState<ChestReward | null>(null);
   const [chestStreak, setChestStreak] = useState(0);
@@ -59,10 +62,10 @@ export function HabitCard({ habit, onUpdate, shields = 0, onPerfectDay }: Props)
       setOptimisticDone(true);
       setJustCompleted(true);
       setTimeout(() => setJustCompleted(false), 600);
-      if ('vibrate' in navigator) navigator.vibrate([40, 30, 80]);
+      hapticNotification("Success");
     } else {
       setOptimisticDone(false);
-      if ('vibrate' in navigator) navigator.vibrate(20);
+      hapticLight();
     }
     window.dispatchEvent(new CustomEvent('axis:refresh'));
 
@@ -107,24 +110,46 @@ export function HabitCard({ habit, onUpdate, shields = 0, onPerfectDay }: Props)
   }
 
   return (
+    <div className="relative rounded-xl overflow-hidden">
+      {/* Swipe reveal — fondo verde que aparece al deslizar */}
+      {!done && (
+        <motion.div
+          className="absolute inset-0 flex items-center px-5 gap-2 rounded-xl"
+          style={{ opacity: swipeOpacity, backgroundColor: `${meta.color}20` }}
+        >
+          <CheckCircle2 size={18} style={{ color: meta.color }} />
+          <span className="text-xs font-mono font-bold" style={{ color: meta.color }}>
+            Desliza para completar
+          </span>
+        </motion.div>
+      )}
+
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      whileTap={{ scale: 0.985 }}
-      className={`
-        relative flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-300 group overflow-hidden
-        ${done
-          ? "border-opacity-30 opacity-60"
-          : "hover:shadow-lg cursor-pointer"
-        }
-      `}
+      whileTap={done ? {} : { scale: 0.985 }}
+      drag={done ? false : "x"}
+      dragConstraints={{ left: 0, right: 90 }}
+      dragElastic={{ left: 0, right: 0.25 }}
+      dragMomentum={false}
       style={{
+        x: done ? 0 : x,
         backgroundColor: done ? `${meta.color}08` : "#14141f",
         borderColor: done ? `${meta.color}30` : justCompleted ? meta.color : "#2d2d4a",
         boxShadow: justCompleted ? `0 0 20px ${meta.color}50` : done ? "none" : undefined,
       }}
+      onDragEnd={(_, info) => {
+        if (!done && info.offset.x > 60) {
+          toggleComplete();
+        }
+        animate(x, 0, { type: "spring", stiffness: 600, damping: 40 });
+      }}
+      className={`
+        relative flex items-center gap-3 p-3.5 rounded-xl border transition-colors duration-300 group overflow-hidden
+        ${done ? "border-opacity-30 opacity-60" : "cursor-pointer"}
+      `}
       onClick={!done ? toggleComplete : undefined}
     >
       {/* Flash de completado */}
@@ -252,5 +277,6 @@ export function HabitCard({ habit, onUpdate, shields = 0, onPerfectDay }: Props)
         onDismiss={() => { setChestReward(null); onUpdate(); }}
       />
     </motion.div>
+    </div>
   );
 }
