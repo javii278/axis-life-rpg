@@ -245,6 +245,13 @@ export default function Dashboard() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Refresca datos cuando el usuario vuelve a la app desde segundo plano
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchAll(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [fetchAll]);
+
   // Daily checkin — solo se llama si no se hizo hoy (evita side-effects repetidos)
   useEffect(() => {
     const today = new Date().toDateString();

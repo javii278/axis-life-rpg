@@ -56,12 +56,13 @@ export function HabitCard({ habit, onUpdate, shields = 0, onPerfectDay }: Props)
     setLoading(true);
 
     if (!habit.completed_today) {
-      // Optimistically mark as done immediately
       setOptimisticDone(true);
       setJustCompleted(true);
       setTimeout(() => setJustCompleted(false), 600);
+      if ('vibrate' in navigator) navigator.vibrate([40, 30, 80]);
     } else {
       setOptimisticDone(false);
+      if ('vibrate' in navigator) navigator.vibrate(20);
     }
 
     try {

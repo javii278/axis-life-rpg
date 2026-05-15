@@ -10,6 +10,11 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  overscroll-behavior: none;
 }
 
 body {
@@ -20,6 +25,16 @@ body {
   min-height: 100dvh;
   overflow-x: hidden;
   padding-bottom: env(safe-area-inset-bottom);
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+
+input, textarea, select {
+  font-size: 16px; /* evita zoom automático en iOS/Android al enfocar */
 }
 
 /* ── Safe area iOS ────────────────────────────────────────── */
